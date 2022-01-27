@@ -49,7 +49,7 @@
     <!-- Favicon and Touch Icons -->
     <link rel="shortcut icon" href="{{landingPageImage('favicon','images/Pexeer.svg')}}">
 </head>
-
+<!-- test -->
 <body class="cp-user-body-bg">
 <!-- header-top -->
 <div class="header-middle">
