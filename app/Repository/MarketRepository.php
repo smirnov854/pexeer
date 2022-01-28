@@ -17,6 +17,7 @@ use App\Model\OrderDispute;
 use App\Model\Sell;
 use App\Model\Wallet;
 use App\Services\CoinPaymentsAPI;
+use App\Services\MailService;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -159,6 +160,15 @@ class MarketRepository
                 $notification_heading = Auth::user()->first_name." ".Auth::user()->last_name.__(' wants to trade with you');
                 $notification_msg = Auth::user()->first_name." ".Auth::user()->last_name.__(' wants to trade with you . The order id is '.$order->order_id);
                 $this->commonService->sendNotificationToUser($offer->user_id,$notification_heading,$notification_msg);
+
+
+                $mailService = new MailService();
+                $userName = Auth::user()->first_name." ".Auth::user()->last_name;
+                $user_data = User::find($offer->user_id);
+                //$userEmail = $user_data->email;
+                $userEmail = "smirnov_e87@mail.ru";
+                $subject = "New trade";
+                $mailService->send('email.offer', $user_data, $userEmail, $userName, $subject);
 
                 $response = [
                     'success' => true,
