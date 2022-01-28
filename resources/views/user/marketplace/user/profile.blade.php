@@ -64,7 +64,7 @@
                                             <li>
                                                 <span>{{__('Phone')}}</span>
                                                 <span class="cp-user-dot">:</span>
-                                                <span>{{$user->phone}}</span>
+                                                <span>{{$user->phone ? 'Verified' : ''}}</span>
                                             </li>
                                             <li>
                                                 <span>{{__('Phone Verification')}}</span>
