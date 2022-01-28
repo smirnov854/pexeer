@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use phpDocumentor\Reflection\Types\Null_;
 
+
 class MarketRepository
 {
     private $commonService;
@@ -165,10 +166,12 @@ class MarketRepository
                 $mailService = new MailService();
                 $userName = Auth::user()->first_name." ".Auth::user()->last_name;
                 $user_data = User::find($offer->user_id);
-                //$userEmail = $user_data->email;
-                $userEmail = "smirnov_e87@mail.ru";
+
+
+                $userEmail = $user_data->email;
                 $subject = "New trade";
-                $mailService->send('email.offer', $user_data, $userEmail, $userName, $subject);
+
+                $mailService->send('email.offer', [], $userEmail, $userName, $subject);
 
                 $response = [
                     'success' => true,
