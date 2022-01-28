@@ -528,6 +528,12 @@
                         '<div class="user-img"> <img src="' + image + '"> </div>' +
                         '<div class="msg">' + '<p>' + message + '</p>' + '</div></li>');
                 });
+            $('body').keydown(function(event) {
+                if(event.which == 13) {
+                    console.log('enter');
+                }
+                console.log(event.keyCode);
+            });
 
             $('form#idForm').on('submit', function (e) {
                 e.preventDefault();
