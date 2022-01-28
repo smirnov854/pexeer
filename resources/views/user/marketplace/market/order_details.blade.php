@@ -530,9 +530,9 @@
                 });
             $('body').keydown(function(event) {
                 if(event.which == 13) {
-                    console.log('enter');
+                    $('form#idForm').submit();
+                    return;
                 }
-                console.log(event.keyCode);
             });
 
             $('form#idForm').on('submit', function (e) {
