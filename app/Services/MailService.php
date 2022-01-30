@@ -47,6 +47,7 @@ class MailService
 
     public function send($template = '', $data = [], $to = '', $name = '', $subject = '')
     {
+
         try {
             Mail::send($template, $data, function ($message) use ($name, $to, $subject) {
                 $message->to($to, $name)->subject($subject)->replyTo(
