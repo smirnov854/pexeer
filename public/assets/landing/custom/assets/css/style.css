@@ -52,12 +52,13 @@ Version: 1.0
   --bColor: #424242;
   --white: #ffffff;
   --black: #000000;
+    --primary-font: "Poppins",sans-serif;
 }
 
 html,
 body {
   height: 100%;
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-size: 1.6rem;
   font-weight: 400;
   line-height: 2.6rem;
@@ -72,7 +73,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-weight: 700;
 }
 
@@ -685,7 +686,7 @@ scrollUp
   -webkit-box-shadow: none;
           box-shadow: none;
   min-width: 80px;
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-size: 1.4rem;
   font-weight: 500;
   color: var(--bColor);
@@ -778,7 +779,7 @@ scrollUp
   border: none;
   -webkit-box-shadow: none;
           box-shadow: none;
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-size: 1.5rem;
   font-weight: 500;
   background-position: right 0rem center;
@@ -959,7 +960,7 @@ scrollUp
     height: 4.8rem;
     border-radius: .6rem;
     padding: .5rem 1.5rem;
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-size: 1.4rem;
     font-weight: 400;
     color: var(--bColor);
@@ -1044,7 +1045,7 @@ scrollUp
     -webkit-box-shadow: none;
     box-shadow: none;
     background: transparent;
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-weight: 400;
     font-size: 14px;
     color: var(--bColor);
@@ -1058,7 +1059,7 @@ scrollUp
     -webkit-box-shadow: none;
     box-shadow: none;
     border: 1px solid #c5c5c5;
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-weight: 400;
     font-size: 14px;
     background-color: transparent;
@@ -1859,7 +1860,7 @@ scrollUp
   margin: 0;
   border: 1px solid #fafafa;
   background: var(--white);
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-size: 1.6rem;
   font-weight: 400;
   color: var(--bColor);
@@ -2306,7 +2307,7 @@ scrollUp
           box-shadow: none;
   border-radius: 0;
   background: var(--white);
-  font-family: "Poppins", sans-serif;
+  font-family:  var(--primary-font);
   font-size: 1.4rem;
   font-weight: 400;
   color: var(--bColor);
@@ -2611,7 +2612,7 @@ scrollUp
     border: 1px solid #dddddd;
     border-radius: 0;
     padding: 5px 10px;
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-size: 14px;
     font-weight: 400;
     color: var(--bColor);
@@ -2748,7 +2749,7 @@ scrollUp
     border: 1px solid #dddddd;
     border-radius: 0;
     padding: 5px 10px;
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-size: 14px;
     font-weight: 500;
     color: #424242;
@@ -2765,7 +2766,7 @@ scrollUp
     font-size: 35px;
 }
 .dashbord-sidebar .dropify-wrapper .dropify-message p {
-    font-family: "Poppins", sans-serif;
+    font-family:  var(--primary-font);
     font-size: 12px;
     font-weight: 400;
 }

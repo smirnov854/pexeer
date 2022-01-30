@@ -28,7 +28,11 @@ Tags: admin, best react admin template, dashboard, material design, bootstrap, r
 
 /* font-family: 'Karla', sans-serif;
 font-family: 'Volkhov', serif; */
-
+:root {
+    --primary-color-three: #FC541F;
+    --hover-color-three: #FE8F28;
+    --primary-font: Karla', sans-serif;
+}
 *,
 ul,
 ol {
@@ -38,7 +42,7 @@ ol {
 
 body {
     font-size: 14px;
-    font-family: 'Karla', sans-serif;
+    font-family: var(--primary-font);
     margin: 0;
     padding: 0;
     color: #676B79;
@@ -82,7 +86,7 @@ h4,
 h5,
 h6 {
     color: #2A2A2D;
-    font-family: 'Volkhov', sans-serif
+    font-family: var(--primary-font);
 }
 
 p {
@@ -190,15 +194,15 @@ p {
     height: 55px;
     min-width: 150px;
     text-align: center;
-    color: #FC541F;
+    color: var(--primary-color-three);
     font-size: 18px;
     font-weight: 700;
     line-height: 55px;
-    border: 1px solid #FC541F;
+    border: 1px solid var(--primary-color-three);
 }
 
 .cbtn1:hover {
-    color: #FC541F;
+    color: var(--hover-color-three);
 }
 
 .header-actions a {
@@ -278,7 +282,7 @@ p {
 
 .navbar-nav li a.active,
 .navbar-nav li:hover a {
-    color: #FC541F !important;
+    color: var(--hover-color-three) !important;
 }
 
 .navbar-nav li a.active {
@@ -317,7 +321,7 @@ p {
 
 .hero-section .left-content h5 {
     display: inline-block;
-    background: -webkit-linear-gradient(45deg, #FC541F, #FE8F28);
+    background: -webkit-linear-gradient(45deg, var(--primary-color-three), var(--hover-color-three));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-family: 'Volkhov', serif;
@@ -356,7 +360,7 @@ p {
 .hero-section .left-content a {
     margin-top: 30px;
     display: inline-block;
-    background: linear-gradient(180deg, #FC541F -50%, #FE8F28 100%);
+    background: linear-gradient(180deg, var(--primary-color-three) -50%, var(--hover-color-three) 100%);
     border-radius: 18px;
     font-size: 18px;
     font-weight: 700;
@@ -623,7 +627,7 @@ p {
 }
 
 .coin-card .buy-sale-btn.buy-sale-btn-1 {
-    border: 1px solid #FC541F;
+    border: 1px solid var(--primary-color-three)
 }
 
 .coin-card .buy-sale-btn.buy-sale-btn-2 {
@@ -631,7 +635,7 @@ p {
 }
 
 .coin-card:hover {
-    background: linear-gradient(130deg, #FC541F, #FE8F28);
+    background: linear-gradient(130deg, var(--primary-color-three), var(--hover-color-three));
     box-shadow: 0px 50px 80px rgba(168, 135, 114, 0.35);
 }
 
@@ -1295,7 +1299,7 @@ footer {
     font-weight: 400;
     border-radius: 10px;
     color: #ffffff;
-    background: #FC541F;
+    background: var(--primary-color-three);
     border: none;
     text-transform: capitalize;
     -webkit-transition: all 0.5s linear;
@@ -1432,7 +1436,7 @@ footer {
     transition: all .3s;
 }
 .dashbord-sidebar .items-list .sngle-item .item-right a:hover {
-    color: var(--primary-color);
+    color: var(--primary-color-three);
 }
 .dashbord-sidebar .items-list .sngle-item .item-right a:last-child {
     margin-right: 0;

@@ -4162,3 +4162,11 @@ table.dataTable thead .sorting_desc_disabled:after {
         font-size: 12px !important;
     }
 }
+.feedback-btn {
+    margin-top: 40px;
+}
+.feedback-wraper {
+    padding: 15px;
+    background: #d1ecf1;
+    border-radius: 5px;
+}
