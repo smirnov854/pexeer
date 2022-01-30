@@ -56,6 +56,9 @@ Route::group(['prefix'=>'admin','namespace'=>'admin','middleware'=> ['auth','adm
     Route::get('transaction-history', 'TransactionController@adminTransactionHistory')->name('adminTransactionHistory');
     Route::get('withdrawal-history', 'TransactionController@adminWithdrawalHistory')->name('adminWithdrawalHistory');
 
+    Route::get('gas-send-history', 'TransactionController@adminGasSendHistory')->name('adminGasSendHistory');
+    Route::get('token-receive-history', 'TransactionController@adminTokenReceiveHistory')->name('adminTokenReceiveHistory');
+
     Route::get('pending-withdrawal', 'TransactionController@adminPendingWithdrawal')->name('adminPendingWithdrawal');
     Route::get('rejected-withdrawal', 'TransactionController@adminRejectedWithdrawal')->name('adminRejectedWithdrawal');
     Route::get('active-withdrawal', 'TransactionController@adminActiveWithdrawal')->name('adminActiveWithdrawal');
@@ -172,5 +175,5 @@ Route::group(['prefix'=>'admin','namespace'=>'admin','middleware'=> ['auth','adm
 
 
     Route::post('download-and-store-font-file', 'FontSettingController@downloadAndStoreFontFile')->name('downloadAndStoreFontFile');
-
+    Route::get('test-web3', 'TestWeb3Controller@index')->name('testWeb3');
 });

@@ -64,6 +64,7 @@ Route::group(['prefix'=>'user','namespace'=>'user','middleware'=> ['auth','user'
         Route::post('upload-payment-sleep', 'MarketplaceController@uploadPaymentSleep')->name('uploadPaymentSleep');
         Route::post('send-order-message', 'MarketplaceController@sendOrderMessage')->name('sendOrderMessage');
         Route::post('save-user-agreement', 'MarketplaceController@saveUserAgreement')->name('saveUserAgreement');
+        Route::post('update-feedback', 'MarketplaceController@updateFeedback')->name('updateFeedback');
     });
 });
 
