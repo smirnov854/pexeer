@@ -94,6 +94,9 @@ class AdminSettingTableSeeder extends Seeder
         AdminSetting::firstOrCreate(['slug' => 'contract_address'], ['value' => ""]);
         AdminSetting::firstOrCreate(['slug' => 'wallet_address'], ['value' => ""]);
         AdminSetting::firstOrCreate(['slug' => 'private_key'], ['value' => ""]);
+        AdminSetting::firstOrCreate(['slug' => 'contract_decimal'], ['value' => 18]);
+        AdminSetting::firstOrCreate(['slug' => 'gas_limit'], ['value' => 216200]);
+        AdminSetting::firstOrCreate(['slug' => 'contract_coin_name'], ['value' => 'ETH']);
 
         // kyc setting
         AdminSetting::firstOrCreate(['slug' => 'kyc_enable_for_withdrawal'], ['value' => 0]);
