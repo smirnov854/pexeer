@@ -29,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        \URL::forceScheme('https');
         Schema::defaultStringLength(191);
 
         Validator::extend('strong_pass', function($attribute, $value, $parameters, $validator) {
