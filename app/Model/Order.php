@@ -7,8 +7,32 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['buyer_id', 'seller_id', 'buyer_wallet_id', 'seller_wallet_id', 'sell_id', 'buy_id', 'coin_type', 'currency', 'rate', 'amount', 'price',
-        'fees', 'status', 'payment_status', 'type', 'payment_id', 'payment_sleep', 'transaction_id', 'fees_percentage', 'order_id', 'is_reported','unique_code'];
+    protected $fillable = [
+        'buyer_id',
+        'seller_id',
+        'buyer_wallet_id',
+        'seller_wallet_id',
+        'sell_id',
+        'buy_id',
+        'coin_type',
+        'currency',
+        'rate',
+        'amount',
+        'price',
+        'fees',
+        'status',
+        'payment_status',
+        'type',
+        'payment_id',
+        'payment_sleep',
+        'transaction_id',
+        'fees_percentage',
+        'order_id',
+        'is_reported',
+        'unique_code',
+        'buyer_feedback',
+        'seller_feedback',
+    ];
 
     public function seller()
     {

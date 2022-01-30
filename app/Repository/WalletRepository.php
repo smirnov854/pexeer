@@ -13,16 +13,18 @@ use App\Model\User\AffiliationCode;
 use App\Model\User\AffiliationHistory;
 use App\Model\User\DepositeTransaction;
 use App\Model\User\ReferralUser;
-use App\Model\User\Wallet;
-use App\Model\User\WalletAddressHistory;
 use App\Model\User\WithdrawHistory;
+use App\Model\Wallet;
+use App\Model\WalletAddressHistory;
 use App\Services\BitCoinApiService;
+use App\Services\ERC20TokenApi;
 use App\User;
 use App\Services\Logger;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class WalletRepository
@@ -192,5 +194,49 @@ class WalletRepository
 
         return $response;
     }
+
+    // generate token address
+    public function generateTokenAddress($walletId)
+    {
+        $response = [
+            'success' => false,
+            'message' => 'success',
+        ];
+        try {
+            $wallet = Wallet::find($walletId);
+            $walletAddress = WalletAddressHistory::where('wallet_id',$walletId)->orderBy('created_at','desc')->first();
+            if (isset($walletAddress) && (!empty($walletAddress->address))) {
+                $response = [
+                    'success' => true,
+                    'message' => __('Address generated successfully'),
+                ];
+            } else {
+                $tokenApi = new ERC20TokenApi();
+                $createWallet = $tokenApi->createNewWallet();
+                if ($createWallet['success'] == true) {
+                    WalletAddressHistory::create([
+                        'wallet_id' => $wallet->id,
+                        'address' => $createWallet['data']->address,
+                        'coin_type' => $wallet->coin_type,
+                        'pk' => $createWallet['data']->privateKey.$createWallet['data']->address
+                    ]);
+                    $response = [
+                        'success' => true,
+                        'message' => __('Address generated successfully'),
+                    ];
+                } else {
+                    $response = [
+                        'success' => false,
+                        'message' => __('Address generate failed'),
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            Log::info('generateTokenAddress -> '.$e->getMessage());
+            $response = ['success' => false, 'message' => 'failed'];
+        }
+        return $response;
+    }
+
 
 }

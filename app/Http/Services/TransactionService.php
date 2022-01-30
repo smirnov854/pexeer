@@ -476,7 +476,7 @@ class TransactionService
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                $this->_cancelTransaction($user, $wallet, $address, $amount, $pendingTransaction);
+//                $this->_cancelTransaction($user, $wallet, $address, $amount, $pendingTransaction);
                 Log::info($e->getMessage());
                 return [
                     'success' => false,
@@ -1094,4 +1094,5 @@ class TransactionService
 
         return $response;
     }
+
 }

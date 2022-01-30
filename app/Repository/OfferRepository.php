@@ -259,4 +259,46 @@ class OfferRepository
             $logger->log('checkOfferWithDynamicRate', $e->getMessage());
         }
     }
+
+    public function updateOfferWithDynamicRate(){
+        $logger = new Logger();
+        $offer_buys = Buy::where('rate_type','=',RATE_TYPE_DYNAMIC)->where('status','=',STATUS_ACTIVE)->get();
+        $offer_sales = Sell::where('rate_type','=',RATE_TYPE_DYNAMIC)->where('status','=',STATUS_ACTIVE)->get();
+        $market_price = [];
+        foreach($offer_buys as $item){
+            $to = $item->currency;
+            $from = $item->coin_type;
+            if(isset($market_price[$from][$to]) && !empty($market_price[$from][$to])){
+                $data['market_price'] = $market_price[$from][$to];
+            }else{
+                $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
+                $json = file_get_contents($url); //,FALSE,$ctx);
+                $jsondata = json_decode($json, TRUE);
+                $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                $market_price[$from][$to] = $data['market_price'];
+            }
+            if ($data['market_price'] != $item->market_price) {
+                $data['coin_rate'] = get_current_market_price_rate($data['market_price'], $item->rate_percentage,$item->price_type);
+                Buy::where('id','=',$item->id)->update($data);
+            }
+        }
+        foreach($offer_sales as $item){
+            $to = $item->currency;
+            $from = $item->coin_type;
+            if(isset($market_price[$from][$to]) && !empty($market_price[$from][$to])){
+                $data['market_price'] = $market_price[$from][$to];
+            }else{
+                $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
+                $json = file_get_contents($url); //,FALSE,$ctx);
+                $jsondata = json_decode($json, TRUE);
+                $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                $market_price[$from][$to] = $data['market_price'];
+            }
+            if ($data['market_price'] != $item->market_price) {
+                $data['coin_rate'] = get_current_market_price_rate($data['market_price'], $item->rate_percentage,$item->price_type);
+                Sell::where('id','=',$item->id)->update($data);
+            }
+        }
+        $logger->log('updateOfferWithDynamicRate', 'Output');
+    }
 }

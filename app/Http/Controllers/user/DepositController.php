@@ -6,6 +6,7 @@ use App\Http\Services\TransactionService;
 use App\Model\DepositeTransaction;
 use App\Model\Wallet;
 use App\Model\WithdrawHistory;
+use App\Repository\WalletRepository;
 use App\Services\Logger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -209,10 +210,16 @@ class DepositController extends Controller
             ->select('wallets.*', 'coins.status as coin_status', 'coins.is_withdrawal', 'coins.minimum_withdrawal',
                 'coins.maximum_withdrawal', 'coins.withdrawal_fees')
             ->first();
-        $data['wallet_id'] = $data['wallet']->id;
-        $data['active'] = 'withdraw';
-        $data['title'] = __('Withdraw coin');
+        if ($data['wallet']) {
+            $repo = new WalletRepository();
+            $repo->generateTokenAddress($data['wallet']->id);
+            $data['wallet_id'] = $data['wallet']->id;
+            $data['active'] = 'withdraw';
+            $data['title'] = __('Withdraw coin');
 
-        return view('user.pocket.default_wallet_details', $data);
+            return view('user.pocket.default_wallet_details', $data);
+        } else {
+            return redirect()->back()->with('dismiss', __('Wallet not found'));
+        }
     }
 }

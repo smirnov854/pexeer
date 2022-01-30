@@ -16,6 +16,7 @@ use App\Model\Sell;
 use App\Repository\ChatRepository;
 use App\Repository\MarketRepository;
 use App\Repository\OfferRepository;
+use App\Services\Logger;
 use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -32,8 +33,13 @@ class MarketplaceController extends Controller
      *
      * MarketController constructor.
      */
+    public $logger;
+    public $marketRepo;
+    public $offerRepo;
+
     public function __construct()
     {
+        $this->logger = new Logger();
         $this->marketRepo = new MarketRepository;
         $this->offerRepo = new OfferRepository();
     }
@@ -404,6 +410,22 @@ class MarketplaceController extends Controller
             return redirect()->back()->with('dismiss', __('Something went wrong'));
         }
 
+    }
+
+    // update feedback
+    public function updateFeedback(Request $request)
+    {
+        try {
+            $response = $this->marketRepo->orderFeedbackUpdate($request,Auth::id());
+            if ($response['success'] == true) {
+                return redirect()->back()->with('success', $response['message']);
+            } else {
+                return redirect()->back()->with('dismiss', $response['message']);
+            }
+        } catch (\Exception $e) {
+            $this->logger->log('updateFeedback', $e->getMessage());
+            return redirect()->back()->with('dismiss', __('Something went wrong'));
+        }
     }
 
 }

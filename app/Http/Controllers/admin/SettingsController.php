@@ -295,6 +295,23 @@ class SettingsController extends Controller
     // admin default coin setting save
     public function adminSaveDefaultCoinSettings(Request $request)
     {
+        $rules = [
+            'coin_name' => 'required',
+            'coin_price' => 'required|numeric',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $errors = [];
+            $e = $validator->errors()->all();
+            foreach ($e as $error) {
+                $errors[] = $error;
+            }
+            $data['message'] = $errors;
+
+            return redirect()->route('adminSettings', ['tab' => 'default'])->with(['dismiss' => $errors[0]]);
+        }
+
         if ($request->post()) {
             try {
                 $response = $this->settingRepo->saveAdminSetting($request);

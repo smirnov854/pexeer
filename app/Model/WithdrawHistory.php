@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class WithdrawHistory extends Model
 {
     protected $fillable = ['receiver_wallet_id','user_id','wallet_id','confirmations','status','address','address_type',
-        'amount','fees','transaction_hash','message','btc','doller', 'coin_type','unique_code', 'coin_id'];
+        'amount','fees','transaction_hash','message','btc','doller', 'coin_type','unique_code', 'coin_id','used_gas'];
     public function senderWallet(){
         return $this->belongsTo(Wallet::class,'wallet_id','id');
     }

@@ -6,6 +6,7 @@ use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class SettingRepository
 {
@@ -30,6 +31,7 @@ class SettingRepository
                 'message' => __('Setting updated successfully')
             ];
         } catch (\Exception $e) {
+            Log::info('saveAdminSetting --> '. $e->getMessage());
             DB::rollBack();
             $response = [
                 'success' => false,
@@ -156,6 +158,7 @@ class SettingRepository
                 'message' => __('General setting updated successfully')
             ];
         } catch (\Exception $e) {
+            Log::info('saveCommonSetting --> '. $e->getMessage());
             DB::rollBack();
             $response = [
                 'success' => false,

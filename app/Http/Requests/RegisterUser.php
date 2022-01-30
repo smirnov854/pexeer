@@ -40,6 +40,7 @@ class RegisterUser extends FormRequest
         if (isset(allsetting()['google_recapcha']) && (allsetting()['google_recapcha'] == STATUS_ACTIVE)) {
             $rules['g-recaptcha-response'] = 'required|captcha';
         }
+        return $rules;
     }
 
     public function messages()

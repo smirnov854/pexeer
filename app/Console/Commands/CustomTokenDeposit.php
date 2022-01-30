@@ -2,25 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\DefaultCoinWithWallet;
+use App\Jobs\CustomTokenDepositJob;
 use App\Services\Logger;
 use Illuminate\Console\Command;
 
-class DefaultCoinWallet extends Command
+class CustomTokenDeposit extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'default-coin';
+    protected $signature = 'custom-token-deposit';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'We need to add new default coin . for this we need to create new coin named coin type Default and make all user wallet';
+    protected $description = 'Monitor the blockchain deposit and if find new deposit then send this token to admin address';
 
     /**
      * Create a new command instance.
@@ -40,7 +40,7 @@ class DefaultCoinWallet extends Command
     public function handle()
     {
         $logger = new Logger();
-        $logger->log('DefaultCoinWallet', 'Called');
-        dispatch(new DefaultCoinWithWallet())->onQueue('default');
+        $logger->log('custom token deposit command', 'Called');
+        dispatch(new CustomTokenDepositJob())->onQueue('default');
     }
 }

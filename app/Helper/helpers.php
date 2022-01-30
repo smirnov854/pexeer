@@ -2593,3 +2593,55 @@ function sendMessage($message, $recipients)
         return  false;
     }
 }
+
+
+// get wallet personal address
+function get_wallet_personal_add($add1,$add2)
+{
+    $data = explode($add1,$add2);
+    return $data[0];
+}
+
+
+function feedback_status($input = null)
+{
+    $output = [
+        0 => '<span class="badge badge-danger">'.__('Very Poor').'</span>',
+        1 => '<span class="badge badge-warning">'.__('Poor').'</span>',
+        2 => '<span class="badge badge-secondary">'.__('Average').'</span>',
+        3 => '<span class="badge badge-info">'.__('Good').'</span>',
+        4 => '<span class="badge badge-primary">'.__('Very Good').'</span>',
+        5 => '<span class="badge badge-success">'.__('Excellent').'</span>',
+    ];
+    if (is_null($input)) {
+        return $output;
+    } else {
+        return $output[$input];
+    }
+}
+
+function get_user_feedback_rate($user_id)
+{
+    $buyCount = 0;
+    $buyFeedback = 0;
+    $sellCount = 0;
+    $sellFeedback = 0;
+    $userFeedback = 0;
+    $buyOrder = Order::where(['buyer_id' => $user_id])->get();
+    $sellOrder = Order::where(['seller_id' => $user_id])->get();
+    if (isset($buyOrder[0])) {
+        $buyCount = sizeof($buyOrder);
+        $buyFeedback = $buyOrder->sum('seller_feedback');
+    }
+    if(isset($sellOrder[0])) {
+        $sellCount = sizeof($sellOrder);
+        $sellFeedback = $sellOrder->sum('buyer_feedback');
+    }
+    $totalOrder = $buyCount + $sellCount;
+    $totalFeedback = $buyFeedback + $sellFeedback;
+    if ($totalOrder > 0) {
+        $feedback = $totalOrder*5;
+        $userFeedback = bcdiv(bcmul(100,$totalFeedback,8),$feedback,8);
+    }
+    return number_format($userFeedback,2);
+}

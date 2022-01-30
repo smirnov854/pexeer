@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Services\TransactionService;
+use App\Model\AdminReceiveTokenTransactionHistory;
 use App\Model\DepositeTransaction;
+use App\Model\EstimateGasFeesTransactionHistory;
 use App\Model\Wallet;
 use App\Model\WithdrawHistory;
 use App\Repository\AffiliateRepository;
 use App\Services\CoinPaymentsAPI;
+use App\Services\ERC20TokenApi;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use function foo\func;
 
 class TransactionController extends Controller
@@ -21,6 +25,8 @@ class TransactionController extends Controller
         $data['title'] = __('Wallet List');
         if($request->ajax()){
             $data['wallets'] = Wallet::join('users','users.id','=','wallets.user_id')
+                ->join('coins', 'coins.id', '=', 'wallets.coin_id')
+                ->where(['coins.status' => STATUS_ACTIVE])
                 ->select(
                     'wallets.name'
                     ,'wallets.coin_type'
@@ -142,8 +148,7 @@ class TransactionController extends Controller
                 , 'withdraw_histories.wallet_id'
                 , 'withdraw_histories.receiver_wallet_id'
                 , 'withdraw_histories.coin_type'
-            )->where(['withdraw_histories.status' => STATUS_PENDING])
-                ->where('withdraw_histories.coin_type', '!=' ,DEFAULT_COIN_TYPE);
+            )->where(['withdraw_histories.status' => STATUS_PENDING]);
 
             return datatables()->of($withdrawal)
                 ->addColumn('address_type', function ($wdrl) {
@@ -271,27 +276,47 @@ class TransactionController extends Controller
 
                 } elseif ($transaction->address_type == ADDRESS_TYPE_EXTERNAL) {
                     try {
-                        $currency =  $transaction->coin_type;
+                        if ($transaction->coin_type == DEFAULT_COIN_TYPE) {
+                            $settings = allsetting();
+                            $coinApi = new ERC20TokenApi();
+                            $requestData = [
+                                "amount_value" => (float)$transaction->amount,
+                                "from_address" => $settings['wallet_address'] ?? '',
+                                "to_address" => $transaction->address,
+                                "contracts" => $settings['private_key'] ?? ''
+                            ];
+                            $result = $coinApi->sendCustomToken($requestData);
+                            if ($result['success'] ==  true) {
+                                $transaction->transaction_hash = $result['data']->hash;
+                                $transaction->used_gas = $result['data']->used_gas;
+                                $transaction->status = STATUS_SUCCESS;
+                                $transaction->update();
+                                $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
 
-                        $coinpayment = new CoinPaymentsAPI();
-                        $api_rate = $coinpayment->GetRates('');
-
-                        $dollerAmmount = bcmul($transaction->amount,settings()['coin_price'],8);
-                        $btcAmmount = converts_currency($dollerAmmount, $currency,$api_rate);
-                        $response = $coinpayment->CreateWithdrawal($transaction->amount,$currency,$transaction->address);
-
-                        if (is_array($response) && isset($response['error']) && ($response['error'] == 'ok') ) {
-                            $transaction->transaction_hash = $response['result']['id'];
-                            $transaction->status = STATUS_SUCCESS;
-                            $transaction->update();
-                            $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
-
-                            return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
-
+                                return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
+                            } else {
+                                return redirect()->back()->with('dismiss', $result['message']);
+                            }
                         } else {
-                            return redirect()->back()->with('dismiss', $response['error']);
+                            $currency =  $transaction->coin_type;
+                            $coinpayment = new CoinPaymentsAPI();
+                            $response = $coinpayment->CreateWithdrawal($transaction->amount,$currency,$transaction->address);
+
+                            if (is_array($response) && isset($response['error']) && ($response['error'] == 'ok') ) {
+                                $transaction->transaction_hash = $response['result']['id'];
+                                $transaction->status = STATUS_SUCCESS;
+                                $transaction->update();
+                                $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
+
+                                return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
+
+                            } else {
+                                return redirect()->back()->with('dismiss', $response['error']);
+                            }
                         }
+
                     } catch(\Exception $e) {
+                        Log::info('adminAcceptPendingWithdrawal --> '.$e->getMessage());
                         return redirect()->back()->with('dismiss', $response['error']);
                     }
                 }
@@ -334,5 +359,45 @@ class TransactionController extends Controller
 
             return redirect()->back()->with('dismiss', __('Something went wrong! Please try again!'));
         }
+    }
+
+    // gas send history
+    public function adminGasSendHistory(Request $request)
+    {
+        $data['title'] = __('Admin Estimate Gas Sent History');
+        if ($request->ajax()) {
+            $items = EstimateGasFeesTransactionHistory::select('*');
+
+            return datatables()->of($items)
+                ->addColumn('created_at', function ($item) {
+                    return $item->created_at;
+                })
+                ->addColumn('status', function ($item) {
+                    return deposit_status($item->status);
+                })
+                ->make(true);
+        }
+
+        return view('admin.transaction.gas_sent_history', $data);
+    }
+
+    // token receive history
+    public function adminTokenReceiveHistory(Request $request)
+    {
+        $data['title'] = __('Admin Token Receive History');
+        if ($request->ajax()) {
+            $items = AdminReceiveTokenTransactionHistory::select('*');
+
+            return datatables()->of($items)
+                ->addColumn('created_at', function ($item) {
+                    return $item->created_at;
+                })
+                ->addColumn('status', function ($item) {
+                    return deposit_status($item->status);
+                })
+                ->make(true);
+        }
+
+        return view('admin.transaction.token_receive_history', $data);
     }
 }

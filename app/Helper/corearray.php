@@ -370,6 +370,75 @@ function element_prefix($input){
 }
 
 
+function contract_decimals($input = null)
+{
+    $output = [
+        6 => 'picoether',
+        9 => 'nanoether',
+        12 => 'microether',
+        15 => 'milliether',
+        18 => 'ether',
+        21 => 'kether',
+        24 => 'mether',
+        27 => 'gether',
+        30 => 'tether',
+    ];
+    if (is_null($input)) {
+        return $output;
+    } else {
+        $result = 'ether';
+        if (isset($output[$input])) {
+            $result = $output[$input];
+        }
+        return $result;
+    }
+}
+function contract_decimals_reverse($input = null)
+{
+    $output = [
+        'picoether' => 6,
+        'nanoether' => 9,
+        'microether' => 12,
+        'milliether' => 15,
+        'ether' => 18,
+        'kether' => 21,
+        'mether' => 24,
+        'gether' => 27,
+        'tether' => 30,
+    ];
+    if (is_null($input)) {
+        return $output;
+    } else {
+        $result = 'ether';
+        if (isset($output[$input])) {
+            $result = $output[$input];
+        }
+        return $result;
+    }
+}
+function contract_decimals_value($input = null)
+{
+    $output = [
+        6 => 1000000,
+        9 => 1000000000,
+        12 => 1000000000000,
+        15 => 1000000000000000,
+        18 => 1000000000000000000,
+        21 => 1000000000000000000000,
+        24 => 1000000000000000000000000,
+        27 => 1000000000000000000000000000,
+        30 => 1000000000000000000000000000000,
+    ];
+    if (is_null($input)) {
+        return $output;
+    } else {
+        $result = 18;
+        if (isset($output[$input])) {
+            $result = $output[$input];
+        }
+        return $result;
+    }
+}
 /*********************************************
  *        End Ststus Functions
  *********************************************/

@@ -18,19 +18,23 @@ use App\Model\Sell;
 use App\Model\Wallet;
 use App\Services\CoinPaymentsAPI;
 use App\Services\MailService;
+use App\Services\Logger;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use phpDocumentor\Reflection\Types\Null_;
+use Pusher\Pusher;
 
 class MarketRepository
 {
     private $commonService;
+    private $logger;
     public function __construct()
     {
         $this->commonService = new CommonService();
+        $this->logger = new Logger();
     }
 
     // save order details buy and sell
@@ -326,6 +330,7 @@ class MarketRepository
                 $notification_heading = Auth::user()->first_name." ".Auth::user()->last_name.__(' moved fund to escrow account');
                 $notification_msg = Auth::user()->first_name." ".Auth::user()->last_name.__(' moved fund to escrow account . The order id is '.$order->order_id);
                 $this->commonService->sendNotificationToUser($order->buyer_id,$notification_heading,$notification_msg);
+                $this->sendPageNotificationWhenStatusChange($order,$order->buyer_id);
             }
 
             $response = [
@@ -415,7 +420,7 @@ class MarketRepository
             $notification_heading = Auth::user()->first_name." ".Auth::user()->last_name.__(' has released the fund. transaction success');
             $notification_msg = Auth::user()->first_name." ".Auth::user()->last_name.__(' has released the fund. transaction success, please check your wallet . The order id is '.$order->order_id);
             $this->commonService->sendNotificationToUser($order->buyer_id,$notification_heading,$notification_msg);
-
+            $this->sendPageNotificationWhenStatusChange($order,$order->buyer_id);
             $response = [
                 'success' => true,
                 'message' => __('Escrow released successfully. So transaction successful')
@@ -527,7 +532,7 @@ class MarketRepository
                     $notification_heading = Auth::user()->first_name." ".Auth::user()->last_name.__(' has done the payment');
                     $notification_msg = Auth::user()->first_name." ".Auth::user()->last_name.__(' has done the payment . The order id is '.$order->order_id);
                     $this->commonService->sendNotificationToUser($order->seller_id,$notification_heading,$notification_msg);
-
+                    $this->sendPageNotificationWhenStatusChange($order,$order->seller_id);
                     $response = [
                         'success' => true,
                         'message' => __('Payment slip uploaded successfully')
@@ -843,7 +848,7 @@ class MarketRepository
 
             return $response;
         }
-        $order = Order::where(['id'=> $id, 'status' => TRADE_STATUS_ESCROW, 'is_reported' => STATUS_ACTIVE])->first();
+        $order = Order::where(['id'=> $id, 'is_reported' => STATUS_ACTIVE])->where('status','>',TRADE_STATUS_INTERESTED)->first();
         if (empty($order)) {
             $response = [
                 'success' => false,
@@ -970,5 +975,58 @@ class MarketRepository
         }
 
         return $response;
+    }
+
+    // update order feedback
+    public function orderFeedbackUpdate($request,$user_id)
+    {
+        $response = [
+            'success' => false,
+            'message' => __('failed ')
+        ];
+        try {
+            if($request->type == 'buyer') {
+                $order = Order::where(['id' => $request->order_id, 'buyer_id' => $user_id])->first();
+                $data = [
+                    'buyer_feedback' => isset($request->buyer_feedback) ? $request->buyer_feedback : Null,
+                ];
+            } else {
+                $order = Order::where(['id' => $request->order_id, 'seller_id' => $user_id])->first();
+                $data = [
+                    'seller_feedback' => isset($request->seller_feedback) ? $request->seller_feedback : Null,
+                ];
+            }
+            if ($order) {
+                $order->update($data);
+                $response = [
+                    'success' => true,
+                    'message' => __('Feedback updated successfully ')
+                ];
+            } else {
+                $response = [
+                    'success' => false,
+                    'message' => __('Order not found ')
+                ];
+            }
+        } catch (\Exception $e) {
+            $this->logger->log('orderFeedbackUpdate', $e->getMessage());
+            $response = [
+                'success' => false,
+                'message' => __('Something went wrong ')
+            ];
+        }
+        return $response;
+    }
+
+
+    // send push status
+    public function sendPageNotificationWhenStatusChange($order,$user_id)
+    {
+        try {
+            $channel = 'sendorderstatus_'.$user_id.'_'.$order->id;
+            $config = config('broadcasting.connections.pusher');
+            $pusher = new Pusher($config['key'], $config['secret'], $config['app_id'], $config['options']);
+            $test =  $pusher->trigger($channel , 'receive_order_status', $order);
+        } catch (\Exception $exception) {}
     }
 }

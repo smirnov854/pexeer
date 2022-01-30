@@ -11,6 +11,7 @@ use App\Model\DepositeTransaction;
 use App\Model\Wallet;
 use App\Model\WalletAddressHistory;
 use App\Model\WithdrawHistory;
+use App\Repository\WalletRepository;
 use App\Services\BitCoinApiService;
 use App\Services\CoinPaymentsAPI;
 use App\User;
@@ -29,7 +30,7 @@ class WalletController extends Controller
     public function myPocket()
     {
         $data['wallets'] = Wallet::join('coins', 'coins.id', '=', 'wallets.coin_id')
-            ->where('wallets.user_id',Auth::id())
+            ->where(['wallets.user_id' => Auth::id(), 'coins.status' => STATUS_ACTIVE])
             ->orderBy('wallets.id','ASC')
             ->select('wallets.*')
             ->get();
@@ -74,13 +75,21 @@ class WalletController extends Controller
     public function walletDetails(Request $request,$id)
     {
         $data['wallet_id'] = $id;
-        $data['wallet'] = Wallet::where(['id'=>$id, 'user_id'=>Auth::id()])->first();
+        $data['wallet'] = Wallet::join('coins', 'coins.id', '=', 'wallets.coin_id')
+            ->where(['wallets.user_id' => Auth::id(), 'coins.status' => STATUS_ACTIVE, 'wallets.id' => $id])
+            ->select('wallets.*', 'coins.status as coin_status', 'coins.is_withdrawal', 'coins.minimum_withdrawal',
+                'coins.maximum_withdrawal', 'coins.withdrawal_fees')
+            ->first();
         if ($data['wallet']) {
             $data['histories'] = DepositeTransaction::where('receiver_wallet_id',$id)->get();
             $data['withdraws'] = WithdrawHistory::where('wallet_id',$id)->get();
             $data['active'] = $request->q;
             $data['title'] = $request->q;
             if ($data['wallet']->coin_type == DEFAULT_COIN_TYPE) {
+                $repo = new WalletRepository();
+                $repo->generateTokenAddress($data['wallet']->id);
+                $data['wallet_address'] = WalletAddressHistory::where('wallet_id',$id)->orderBy('created_at','desc')->first();
+
                 return view('user.pocket.default_wallet_details', $data);
             } else {
                 $exists = WalletAddressHistory::where('wallet_id',$id)->orderBy('created_at','desc')->first();
@@ -107,14 +116,28 @@ class WalletController extends Controller
     {
         try {
             $wallet = new \App\Services\wallet();
-            $myWallet = Wallet::find($request->wallet_id);
-            $address = get_coin_payment_address($myWallet->coin_type);
+            $myWallet = Wallet::where(['id' => $request->wallet_id, 'user_id' => Auth::id()])->first();
+            if ($myWallet) {
+                if ($myWallet->coin_type == DEFAULT_COIN_TYPE) {
+                    $repo = new WalletRepository();
+                    $response = $repo->generateTokenAddress($myWallet->id);
+                    if ($response['success'] == true) {
+                        return redirect()->back()->with('success', $response['message']);
+                    } else {
+                        return redirect()->back()->with('dismiss', $response['message']);
+                    }
+                } else {
+                    $address = get_coin_payment_address($myWallet->coin_type);
 
-            if (!empty($address)) {
-                $wallet->AddWalletAddressHistory($request->wallet_id,$address,$myWallet->coin_type);
-                return redirect()->back()->with(['success'=>__('Address generated successfully')]);
+                    if (!empty($address)) {
+                        $wallet->AddWalletAddressHistory($request->wallet_id,$address,$myWallet->coin_type);
+                        return redirect()->back()->with(['success'=>__('Address generated successfully')]);
+                    } else {
+                        return redirect()->back()->with(['dismiss'=>__('Address not generated ')]);
+                    }
+                }
             } else {
-                return redirect()->back()->with(['dismiss'=>__('Address not generated ')]);
+                return redirect()->back()->with(['dismiss'=>__('Wallet not found')]);
             }
         } catch (\Exception $e) {
             return redirect()->back()->with('dismiss', $e->getMessage());

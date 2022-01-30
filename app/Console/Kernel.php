@@ -13,7 +13,9 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\MemberBonusDistribute::class
+        Commands\CustomTokenDeposit::class,
+        Commands\SetDynamicRate::class,
+        Commands\AffiliationFeeCron::class
     ];
 
     /**
@@ -24,11 +26,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-         $schedule->command('command:membershipbonus')
-             ->daily();
-
          $schedule->command('command:affiliationfee')
              ->monthly();
+
+        $schedule->command('command:set-dynamic-rate')
+            ->everyFiveMinutes();
+
+        $schedule->command('custom-token-deposit')
+            ->everyFiveMinutes();
     }
 
     /**

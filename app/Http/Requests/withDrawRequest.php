@@ -32,7 +32,7 @@ class withDrawRequest extends FormRequest
         $rule = [
             //  'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'address' => ['required', 'string'],
-            'amount' => ['required','numeric','min:.0001','max:99999999.99999999'],
+            'amount' => ['required','numeric'],
         ];
 
         if (!empty($this->message)) {
