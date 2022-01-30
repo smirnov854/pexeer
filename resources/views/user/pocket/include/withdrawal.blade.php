@@ -10,18 +10,18 @@
                     <input name="address" type="text" class="form-control" id="to"
                            placeholder="{{__('Address')}}">
                     <span class="flaticon-wallet icon"></span>
-                    <span class="text-warning">{{__('Note : Please input here your ')}} {{$wallet->coin_type}} {{__(' Coin address for withdrawal')}}</span><br>
-                    <span class="text-danger">{{__('Warning : Please input your ')}} {{$wallet->coin_type}} {{__(' Coin address carefully. Because of wrong address if coin is lost, we will not responsible for that.')}}</span>
+                    <span class="text-warning">{{__('Note : Please input here your ')}} {{check_default_coin_type($wallet->coin_type)}} {{__(' Coin address for withdrawal')}}</span><br>
+                    <span class="text-danger">{{__('Warning : Please input your ')}} {{check_default_coin_type($wallet->coin_type)}} {{__(' Coin address carefully. Because of wrong address if coin is lost, we will not responsible for that.')}}</span>
                 </div>
                 <div class="form-group">
                     <label for="amount">{{__('Amount')}}</label>
                     <input name="amount" type="text" class="form-control" id="amount"
                            placeholder="Amount">
                     <span class="text-warning" style="font-weight: 700;">{{__('Minimum withdrawal amount : ')}}</span>
-                    <span class="text-warning">{{settings('minimum_withdrawal_amount')}} {{$wallet->coin_type}}</span>
+                    <span class="text-warning">{{ $wallet->minimum_withdrawal }} {{check_default_coin_type($wallet->coin_type)}}</span>
                     <span class="text-warning">{{__(' and ')}}</span>
                     <span class="text-warning" style="font-weight: 700;">{{__('Maximum withdrawal amount : ')}}</span>
-                    <span class="text-warning">{{settings('maximum_withdrawal_amount')}} {{$wallet->coin_type}}</span>
+                    <span class="text-warning">{{ $wallet->maximum_withdrawal }} {{check_default_coin_type($wallet->coin_type)}}</span>
                     <p class="text-warning" id="equ_btc"><span class="totalBTC"></span> <span class="coinType"></span></p>
                 </div>
                 <div class="form-group">

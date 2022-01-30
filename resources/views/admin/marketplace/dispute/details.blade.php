@@ -162,16 +162,20 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    @if($item->status == TRADE_STATUS_ESCROW)
-                        <p class="text-danger text-justify">{{__("Seller escrowed fund successfully but the buyer still not completed the payment process. So analysis the
-current situation you can refund the escrow amount to seller.")}}</p><br>
-                        <a href="#refund" data-toggle="modal" class="btn btn-warning" >{{__('Refund Escrow')}}</a>
-                    @endif
-                    @if($item->status == TRADE_STATUS_PAYMENT_DONE)
-                            <p class="text-danger text-justify">{{__("Buyer already competed the payment process successfully but the seller still not released the escrowed amount. So analysis the
-current situation you can release the escrow amount to buyer.")}}</p><br>
-                        <a href="#release" data-toggle="modal"class="btn btn-success" >{{__('Release Escrow')}}</a>
-                    @endif
+                    <div class="row">
+                        <div class="col-md-6">
+                            @if($item->status == TRADE_STATUS_ESCROW || $item->status == TRADE_STATUS_PAYMENT_DONE)
+                                <p class="text-danger text-justify">{{__(" Analysis the current situation you can refund the escrow amount to seller.")}}</p><br>
+                                <a href="#refund" data-toggle="modal" class="btn btn-warning" >{{__('Refund Escrow')}}</a>
+                            @endif
+                        </div>
+                        <div class="col-md-6">
+                            @if($item->status == TRADE_STATUS_PAYMENT_DONE)
+                                <p class="text-danger text-justify">{{__("Analysis the current situation you can release the escrow amount to buyer.")}}</p><br>
+                                <a href="#release" data-toggle="modal"class="btn btn-success" >{{__('Release Escrow')}}</a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             @else
                 <div class="col-md-12">

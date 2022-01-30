@@ -31,22 +31,6 @@
             </div>
             <div class="col-lg-6 col-12  mt-20">
                 <div class="form-group">
-                    <label for="#">{{__('Default Coin Name/Type')}}</label>
-                    <input class="form-control" type="text" name="coin_name"
-                           placeholder="{{__('Default coin name or type')}}"
-                           value="{{$settings['coin_name']}}">
-                </div>
-            </div>
-            <div class="col-lg-6 col-12  mt-20">
-                <div class="form-group">
-                    <label for="#">{{__('Default Coin price (in USD)')}}</label>
-                    <input class="form-control" type="text" name="coin_price"
-                           placeholder="{{__('Default coin price')}}"
-                           value="{{$settings['coin_price']}}">
-                </div>
-            </div>
-            <div class="col-lg-6 col-12  mt-20">
-                <div class="form-group">
                     <label for="#">{{__('Coin Payment Base Coin Type')}}</label>
                     <input class="form-control" type="text" name="base_coin_type"
                            placeholder="{{__('Coin Type eg. BTC')}}"

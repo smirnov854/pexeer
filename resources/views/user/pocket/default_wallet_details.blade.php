@@ -68,9 +68,66 @@
 @endsection
 
 @section('script')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bignumber.js/8.0.2/bignumber.min.js" integrity="sha512-7UzDjRNKHpQnkh1Wf1l6i/OPINS9P2DDzTwQNX79JxfbInCXGpgI1RPb3ZD+uTP3O5X7Ke4e0+cxt2TxV7n0qQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.1/web3.min.js" integrity="sha512-8Frac7ZdCMHBsKch6t/XEAKauXT1PXTgRGX/9NO3IzfLQ3QlTnr8ACRmJMOWPr3rxeCFpjUH+Hk7Y4v4zm825Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{asset('assets/js/abi.js')}}"></script>
-    <script src="{{asset('assets/js/chain.js')}}"></script>
+    <script>
+        function withDrawBalance() {
+            var g2fCheck = '{{\Illuminate\Support\Facades\Auth::user()->google2fa_secret}}';
+
+
+            if (g2fCheck.length > 1) {
+                var frm = $('#withdrawFormData');
+
+                $.ajax({
+                    type: frm.attr('method'),
+                    url: frm.attr('action'),
+                    data: frm.serialize(),
+                    success: function (data) {
+                        if (data.success == true) {
+                            $('#g2fcheck').modal('show');
+
+                        } else {
+                            VanillaToasts.create({
+                                // title: 'Message Title',
+                                text: data.message,
+                                type: 'warning',
+                                timeout: 3000
+
+                            });
+                        }
+
+                    },
+                    error: function (data) {
+
+                    },
+                });
+            } else {
+                VanillaToasts.create({
+                    text: "{{__('Your google authentication is disabled,please enable it')}}",
+                    type: 'warning',
+                    timeout: 3000
+
+                });
+            }
+
+        }
+
+        <!-- copy_to_clip -->
+        $('.copy_to_clip').on('click', function () {
+            /* Get the text field */
+            var copyFrom = document.getElementById("addressVal");
+
+            /* Select the text field */
+            copyFrom.select();
+
+            /* Copy the text inside the text field */
+            document.execCommand("copy");
+
+            VanillaToasts.create({
+                title: 'Copied the text',
+                // text: copyFrom.value,
+                type: 'success',
+                timeout: 3000,
+                positionClass: 'topCenter'
+            });
+        });
+    </script>
 @endsection

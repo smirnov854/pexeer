@@ -40,13 +40,16 @@
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="single-widget newsletter-widget">
-                        <h3 class="widget-title">newsletter</h3>
+                        <h3 class="widget-title">{{__('newsletter')}}</h3>
                         <p>{{$settings['newsletter_description'] ?? 'Subscribe to our weekly newsletter and receive updates vai email'}}</p>
                         <div class="newsletter-form">
-                            <div class="form-group">
-                                <input type="email" class="form-control" id="newsletter" name="newsletter" placeholder="Email" required />
-                                <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
-                            </div>
+                            <form action="{{route('subscriptionProcess')}}" method="post">
+                                @csrf
+                                <div class="form-group">
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Email" required />
+                                    <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

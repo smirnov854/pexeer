@@ -10,7 +10,12 @@
     <meta property="og:site_name" content="{{allsetting('app_title')}}"/>
     <meta property="og:url" content="{{url()->current()}}"/>
     <meta itemprop="image" content="{{show_image(1,'logo')}}"/>
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    @php
+        $protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'https' : 'http';
+    @endphp
+    @if($protocol=='https')
+        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    @endif
     <!-- Place favicon.ico in the root directory -->
     <link rel="shortcut icon" href="{{landingPageImage('favicon','images/Pexeer.svg')}}">
     <!-- css file  -->

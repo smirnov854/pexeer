@@ -133,6 +133,12 @@
                         <li class="@if(isset($sub_menu) && $sub_menu == 'transaction_withdrawal') submenu-active @endif">
                             <a href="{{route('adminPendingWithdrawal')}}">{{__('Pending Withdrawal')}}</a>
                         </li>
+                        <li class="@if(isset($sub_menu) && $sub_menu == 'gas_sent') submenu-active @endif">
+                            <a href="{{route('adminGasSendHistory')}}">{{__('Gas Sent History')}}</a>
+                        </li>
+                        <li class="@if(isset($sub_menu) && $sub_menu == 'receive_token') submenu-active @endif">
+                            <a href="{{route('adminTokenReceiveHistory')}}">{{__('Token Receive History')}}</a>
+                        </li>
                     </ul>
                 </li>
                 <li class="@if(isset($menu) && $menu == 'offer') active-page  @endif">

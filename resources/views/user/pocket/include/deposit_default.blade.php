@@ -1,50 +1,51 @@
-<div class="row">
+<div class="row mt-4">
     <div class="col-lg-4 offset-lg-1">
-        <div class="form-area cp-user-profile-info withdraw-form">
-            <div class="form-group d-none after_connect" id="amount">
-                <input type="hidden" name="chain_id" id="chain_id" value="{{allsetting('chain_id')}}">
-                <label for="amount">{{__('Amount')}}</label>
-                <input name="amount" type="text" class="form-control" id="amount_input"
-                       placeholder="Amount">
-                <p class="text-warning" id="equ_btc"><span class="totalBTC"></span>
-                    <span class="coinType"></span></p>
-            </div>
-            <button onclick="connectWithMetamask()" type="button"
-                    class="btn profile-edit-btn before_connect">{{__('Confirm with metamask')}}
-            </button>
-
-            <button onclick="depositeFromMetamask()" type="button"
-                    class="btn profile-edit-btn d-none after_connect">{{__('Pay with metamask')}}
-            </button>
-
+        <div class="qr-img text-center">
+            @if(!empty($wallet_address) && !empty($wallet_address->address))  {!! QrCode::size(300)->generate($wallet_address->address); !!}
+            @else
+                {!! QrCode::size(300)->generate('0'); !!}
+            @endif
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card">
-            <h5 class="card-header">{{__("Metamask setup")}}</h5>
+        <div class="cp-user-copy tabcontent-right">
+            <form action="#">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <button type="button" class="copy_to_clip btn">{{__('Copy')}}</button>
+                    </div>
+                    <input readonly value="{{isset($wallet_address) ? $wallet_address->address : 0}}"
+                           type="text" class="form-control" id="addressVal">
+                </div>
+            </form>
+            <div class="aenerate-address">
+                @if(empty($wallet_address) || empty($wallet_address->address))
+                    <a class="btn cp-user-buy-btn"  href="{{route('generateNewAddress')}}?wallet_id={{$wallet->id}}">
+                        {{__('Generate address')}}
+                    </a>
+                @endif
+            </div>
+        </div>
+        <div class="card mt-4">
+            <h5 class="card-header">{{__("Token Info")}}</h5>
             <div class="card-body">
-                <p>{{__('By using metamask you can deposit your token')}}</p>
-                <p>{{__('Download metamask from there')}} <a target="_blank" href="https://metamask.io/">{{__('Metamax')}}</a></p>
-                <p>{{__('Add token to your metamask wallet')}}</p>
                 <p> <label for="">{{__('Chain link')}} : </label></p>
                 <p>
                     <label for="">{{allsetting('chain_link')}}</label>
                 </p>
-                <p>
-                    <label for="">
-                        {{__('Contract address')}} :
-                    </label>
-                </p>
+                <p><label for="">{{__('Contract address')}} :</label></p>
                 <p>
                     <label for="">
                         {{allsetting('contract_address')}}
                     </label>
-                    <input type="hidden" id="contract_address" value="{{allsetting('contract_address')}}">
-                    <input type="hidden" id="wallet_address" value="{{allsetting('wallet_address')}}">
-                    <input type="hidden" id="callback_url" value="{{route('defaultDepositCallback')}}">
+                </p>
+                <p><label for="">{{__('Token Symbol')}} :</label></p>
+                <p>
+                    <label for="">
+                        {{isset(allsetting()['coin_name']) ? allsetting()['coin_name'] : ''}}
+                    </label>
                 </p>
             </div>
         </div>
-
     </div>
 </div>

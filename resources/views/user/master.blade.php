@@ -49,7 +49,7 @@
     <!-- Favicon and Touch Icons -->
     <link rel="shortcut icon" href="{{landingPageImage('favicon','images/Pexeer.svg')}}">
 </head>
-<!-- test -->
+
 <body class="cp-user-body-bg">
 <!-- header-top -->
 <div class="header-middle">
@@ -419,17 +419,13 @@
         Pusher.logToConsole = true;
         window.Echo = new Echo({
             broadcaster: 'pusher',
-            wsPort:80,
-            wssPort:443,
-            //wsHost: window.location.hostname,
-            //wsPort: my_env_socket_port,
-            //wssPort: 443,
+            wsHost: window.location.hostname,
+            wsPort: my_env_socket_port,
+            wssPort: 443,
             key: '{{ env('PUSHER_APP_KEY') }}',
             cluster: 'mt1',
-            encrypted: true,
-            disableStats: true,
-            forceTLS:false,
-            enabledTransports: ['ws', 'wss'], // <-- only use ws and wss as valid transports
+            encrypted: false,
+            disableStats: true
         });
 
 
