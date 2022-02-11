@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: rana
- * Date: 8/30/17
- * Time: 5:19 PM
- */
 
 namespace App\Repository;
 
@@ -69,11 +63,12 @@ class AffiliateRepository
             $adminSettings = $this->checkAdminSettings();
             $withdrawalUser = $transaction->wallet->user->id;
             $transactionId = $transaction->transaction_hash;
+            $coinType = $transaction->coin_type;
             $maxReferralLevel = max_level();
             try {
                 $userAffiliation = $this->parentReferrals($maxReferralLevel, $withdrawalUser);
                 if (!empty($userAffiliation)) {
-                    $this->calculateReferralFees($adminSettings, $transactionId, $userAffiliation, $transaction->fees,  $maxReferralLevel);
+                    $this->calculateReferralFees($adminSettings, $transactionId, $userAffiliation, $transaction->fees,  $maxReferralLevel, $coinType);
                 }
             } catch (\Exception $e) {
 //                dd($e);
@@ -146,7 +141,7 @@ class AffiliateRepository
     }
 
     // calculate referral fees
-    protected function calculateReferralFees($adminSettings, $transactionId, $affiliateUsers, $systemFees, $maxReferralLevel = 1)
+    protected function calculateReferralFees($adminSettings, $transactionId, $affiliateUsers, $systemFees, $maxReferralLevel = 1, $coinType)
     {
         try {
 
@@ -156,20 +151,26 @@ class AffiliateRepository
 
         $affiliationHistoryData['system_fees'] = $systemFees;
         $affiliationHistoryData['child_id'] = $affiliateUsers->user_id;
-        $affiliationHistoryData['status'] = 0;
+        $affiliationHistoryData['status'] = STATUS_ACTIVE;
         $affiliationHistoryData['transaction_id'] = $transactionId;
         $affiliationHistoryData['order_type'] = 1;
+        $affiliationHistoryData['coin_type'] = $coinType;
 
 
         for ($i = 1; $i <= $maxReferralLevel; $i++) {
             $parent_level = 'parent_level_user_' . $i;
             $fees_level = 'fees_level' . $i;
             if ($affiliateUsers->{$parent_level}) {
-                $affiliationHistoryData['user_id'] = $affiliateUsers->{$parent_level};
-                $fees_percent = isset($adminSettings[$fees_level]) ? $adminSettings[$fees_level] : '0';
-                $affiliationHistoryData['amount'] = ($systemFees * $fees_percent) / 100;
-                $affiliationHistoryData['level'] = $i;
                 try {
+                    $affiliationHistoryData['user_id'] = $affiliateUsers->{$parent_level};
+                    $fees_percent = isset($adminSettings[$fees_level]) ? $adminSettings[$fees_level] : '0';
+                    $affiliationHistoryData['amount'] = ($systemFees * $fees_percent) / 100;
+                    $affiliationHistoryData['level'] = $i;
+                    $userWallet = get_primary_wallet($affiliationHistoryData['user_id'], $coinType);
+                    if (isset($userWallet)) {
+                        $affiliationHistoryData['wallet_id'] = $userWallet->id;
+                        $userWallet->increment('referral_balance',$affiliationHistoryData['amount']);
+                    }
                     AffiliationHistory::create($affiliationHistoryData);
                 } catch (\Exception $e) {
                     return false;

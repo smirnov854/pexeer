@@ -15,7 +15,16 @@
                 <div class="hero-banner-info">
                     <h1 class="hero-title">{{$section_parent->section_title}}</h1>
                     <p class="hero-content">{{$section_parent->section_description}}</p>
-                    <a href="{{route('signUp')}}" class="primary-btn-two">{{$section_data[0]->register_button_name}}</a>
+
+                    @if(Auth::user())
+                        @if(Auth::user()->role == USER_ROLE_USER)
+                            <a href="{{route('marketPlace')}}" class="primary-btn-two">{{__('Go The Marketplace')}}</a>
+                        @else
+                            <a href="{{route('adminDashboard')}}" class="primary-btn-two">{{__('Dashboard')}}</a>
+                        @endif
+                    @else
+                        <a href="{{route('signUp')}}" class="primary-btn-two">{{$section_data[0]->register_button_name}}</a>
+                    @endif
                 </div>
             </div>
             <div class="col-lg-6">

@@ -36,16 +36,11 @@ return [
             'secret' => env('PUSHER_APP_SECRET','test'),
             'app_id' => env('PUSHER_APP_ID','test'),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER','mt1'),
+                'cluster' => env('PUSHER_APP_CLUSTER','ap2'),
                 'encrypted' => true,
-                // 'host' => env('BROADCAST_DOMAIN','127.0.0.1'),
-                //'port' => env('BROADCAST_PORT',6001),
-                'useTLS' => true,
-                'scheme' => 'http',
-                'curl_options' => [
-                    CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => 0,
-                ]
+                'host' => env('BROADCAST_DOMAIN','127.0.0.1'),
+                'port' => env('BROADCAST_PORT',6005),
+                'scheme' => 'http'
             ],
         ],
 

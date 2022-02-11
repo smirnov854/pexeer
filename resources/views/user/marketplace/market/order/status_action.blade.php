@@ -67,6 +67,7 @@
                 </form>
             @endif
         @endif
+
         @if($item->is_reported == STATUS_ACTIVE)
             @if(isset($report))
                 <div class="cp-user-card-header-area">

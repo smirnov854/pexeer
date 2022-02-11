@@ -8,10 +8,10 @@
                             <img src="{{show_image(1,'logo')}}" class="img-fluid" alt="">
                         </a>
                         <ul class="social-links">
-                            <li><a href="{{$settings['facebook_link'] ?? '#'}}"><i class="icofont-facebook"></i></a></li>
-                            <li><a href="{{$settings['twitter_link'] ?? '#'}}"><i class="icofont-twitter"></i></a></li>
-                            <li><a href="{{$settings['linkedin_link'] ?? '#'}}"><i class="icofont-linkedin"></i></a></li>
-                            <li><a href="{{$settings['instagram_link'] ?? '#'}}"><i class="icofont-instagram"></i></a></li>
+                            <li><a target="_blank" href="{{$settings['facebook_link'] ?? '#'}}"><i class="icofont-facebook"></i></a></li>
+                            <li><a target="_blank" href="{{$settings['twitter_link'] ?? '#'}}"><i class="icofont-twitter"></i></a></li>
+                            <li><a target="_blank" href="{{$settings['linkedin_link'] ?? '#'}}"><i class="icofont-linkedin"></i></a></li>
+                            <li><a target="_blank" href="{{$settings['instagram_link'] ?? '#'}}"><i class="icofont-instagram"></i></a></li>
                         </ul>
                     </div>
                 </div>

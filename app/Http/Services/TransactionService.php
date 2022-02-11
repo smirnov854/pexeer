@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\Jobs\MailSend;
 use App\Model\DepositeTransaction;
 use App\Model\Wallet;
 use App\Model\WalletAddressHistory;
@@ -357,10 +358,16 @@ class TransactionService
         $message = !empty($message) ? $message : 'test message';
         $wallet = Wallet::join('coins', 'coins.id', '=', 'wallets.coin_id')
             ->where(['wallets.id' => $wallet, 'wallets.user_id'=>Auth::id()])
-            ->select('wallets.*', 'coins.status as coin_status', 'coins.is_withdrawal', 'coins.minimum_withdrawal',
+            ->select('wallets.*', 'coins.name as coin_name', 'coins.status as coin_status', 'coins.is_withdrawal', 'coins.minimum_withdrawal',
                 'coins.maximum_withdrawal', 'coins.withdrawal_fees', 'coins.max_withdrawal_per_day')
             ->first();
         $user = $wallet->user;
+
+        $mail_info = [];
+        $coin_name = strtolower($wallet->coin_name);
+        $mail_info['mailTemplate'] = 'email.transaction_mail';
+        $sender_wallet_address = WalletAddressHistory::where('wallet_id',$wallet->id)->first()->address;
+
         try {
 
             if ( filter_var($address, FILTER_VALIDATE_EMAIL) ) {
@@ -432,22 +439,65 @@ class TransactionService
                     'message' => $message,
                     'receiver_wallet_id' => empty($receiverWallet) ? 0 : $receiverWallet->id,
                 ];
-
                 $transaction = WithdrawHistory::create($transactionArray);
                 Log::info(json_encode($transaction));
-
-
+                $mail_info['to'] = $user->email;
+                $mail_info['name'] = $user->first_name.' '.$user->last_name;
+                if($address_type = ADDRESS_TYPE_INTERNAL){
+                    $mail_info_address_type = 'Internal';
+                }else{
+                    $mail_info_address_type = 'External';
+                }
                 if ($address_type == ADDRESS_TYPE_INTERNAL){
                     $pendingAmount = WithdrawHistory::where(['wallet_id' => $wallet->id, 'status' => STATUS_PENDING])
                         ->where('created_at', '>=', Carbon::now()->subDay())
                         ->sum('amount');
-
                     if ($pendingAmount < $wallet->max_withdrawal_per_day) {
                         $transaction->status = STATUS_SUCCESS;
                         $transaction->save();
-                    }
+                        $mail_info['subject'] = "TransactionID:<$trans_id> Withdrawal ($amount $coin_name) placed successfully.";
+                        $withdraw_status = 'Successful';
 
+                    } else{
+                        $mail_info['subject'] = "TransactionID:<$trans_id> Withdrawal ($amount $coin_name) placed successfully. Waiting for admin approval!";
+                        $withdraw_status = 'Waiting for admin approval';
+                    }
+                    $mail_info['email_message']="$amount $coin_name Withdrawal placed successfully from $wallet->name. Transaction Information given below:";
+                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$trans_id</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
                     if ( !empty($receiverWallet) ) {
+
+                        $mail_info['to'] = $receiverUser->email;
+                        $mail_info['name'] = $receiverUser->first_name.' '.$receiverUser->last_name;
+                        $mail_info['email_message']="$amount $coin_name deposit placed successfully from $receiverWallet->name. Transaction Information given below:";
+
                         $transactionArray = [
                             'address' => $address,
                             'address_type' => $address_type,
@@ -471,9 +521,46 @@ class TransactionService
                     }
                     if ( !empty($pendingTransaction) ) {
                         $pendingTransaction->status = STATUS_SUCCESS;
+                        $mail_info['subject'] = "TransactionID:<$trans_id> Deposit ($amount $coin_name) placed successfully.";
+                        dispatch(new MailSend($mail_info))->onQueue('send-mail-deposit');
+                    }else{
+                        $mail_info['subject'] = "TransactionID:<$trans_id> Deposit ($amount $coin_name) placed successfully. Waiting for admin approval!";
+                        dispatch(new MailSend($mail_info))->onQueue('send-mail-deposit');
                     }
+                } else {
+                    $mail_info['subject'] = "TransactionID:<$trans_id> Withdrawal ($amount $coin_name) placed successfully. Waiting for admin approval!";
+                    $withdraw_status = 'Waiting for admin approval';
+                    $mail_info['email_message']="$amount $coin_name Withdrawal placed successfully from $wallet->name. Transaction Information given below:";
+                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$trans_id</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
                 }
-
             } catch (\Exception $e) {
                 DB::rollBack();
 //                $this->_cancelTransaction($user, $wallet, $address, $amount, $pendingTransaction);

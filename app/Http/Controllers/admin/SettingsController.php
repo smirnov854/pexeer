@@ -298,6 +298,7 @@ class SettingsController extends Controller
         $rules = [
             'coin_name' => 'required',
             'coin_price' => 'required|numeric',
+            'contract_coin_name' => 'required',
         ];
 
         $validator = Validator::make($request->all(), $rules);

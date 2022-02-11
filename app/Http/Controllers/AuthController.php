@@ -49,12 +49,32 @@ class AuthController extends Controller
     // sign up
     public function signUp()
     {
+        if (Auth::user()) {
+            if (Auth::user()->role == USER_ROLE_ADMIN) {
+                return redirect()->route('adminDashboard');
+            } elseif (Auth::user()->role == USER_ROLE_USER) {
+                return redirect()->route('userDashboard');
+            } else {
+                Auth::logout();
+                return view('auth.signup');
+            }
+        }
         return view('auth.signup');
     }
 
     // forgot password
     public function forgotPassword()
     {
+        if (Auth::user()) {
+            if (Auth::user()->role == USER_ROLE_ADMIN) {
+                return redirect()->route('adminDashboard');
+            } elseif (Auth::user()->role == USER_ROLE_USER) {
+                return redirect()->route('userDashboard');
+            } else {
+                Auth::logout();
+                return view('auth.forgot_password');
+            }
+        }
         return view('auth.forgot_password');
     }
 

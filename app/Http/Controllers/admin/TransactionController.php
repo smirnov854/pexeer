@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Services\TransactionService;
+use App\Jobs\DistributeWithdrawalReferralBonus;
+use App\Jobs\MailSend;
 use App\Model\AdminReceiveTokenTransactionHistory;
 use App\Model\DepositeTransaction;
 use App\Model\EstimateGasFeesTransactionHistory;
 use App\Model\Wallet;
+use App\Model\WalletAddressHistory;
 use App\Model\WithdrawHistory;
 use App\Repository\AffiliateRepository;
 use App\Services\CoinPaymentsAPI;
 use App\Services\ERC20TokenApi;
+use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -254,76 +258,243 @@ class TransactionController extends Controller
     // accept process of pending withdrawal
     public function adminAcceptPendingWithdrawal($id)
     {
-        if (isset($id)) {
-            try {
-                $wdrl_id = decrypt($id);
-            } catch (\Exception $e) {
-                return redirect()->back();
-            }
-            $transaction = WithdrawHistory::with('wallet')->with('users')->where(['id' => $wdrl_id, 'status' => STATUS_PENDING])->firstOrFail();
-            $affiliate_servcice = new AffiliateRepository();
+        try {
+            if (isset($id)) {
+                try {
+                    $wdrl_id = decrypt($id);
+                } catch (\Exception $e) {
+                    return redirect()->back();
+                }
+                $transaction = WithdrawHistory::with('wallet')->with('users')->where(['id' => $wdrl_id, 'status' => STATUS_PENDING])->firstOrFail();
 
-            if (!empty($transaction)) {
-                if ($transaction->address_type == ADDRESS_TYPE_INTERNAL) {
 
-                    $deposit = DepositeTransaction::where(['transaction_id' =>$transaction->transaction_hash, 'address' => $transaction->address])->update(['status' => STATUS_SUCCESS]);
+                if (!empty($transaction)) {
 
-                    Wallet::where(['id' => $transaction->receiver_wallet_id])->increment('balance', $transaction->amount);
-                    $transaction->status = STATUS_SUCCESS;
-                    $transaction->save();
-                    $affiliate_servcice->storeAffiliationHistory($transaction);
-                    return redirect()->back()->with('success', 'Pending withdrawal accepted Successfully.');
+                    $mail_info = [];
+                    $sender_wallet_address = WalletAddressHistory::where('wallet_id',$transaction->wallet_id)->first()->address;
+                    $coin_name = strtolower($transaction->wallet->coin_type);
+                    $mail_info['mailTemplate'] = 'email.transaction_mail';
+                    $withdraw_status = 'Successful';
 
-                } elseif ($transaction->address_type == ADDRESS_TYPE_EXTERNAL) {
-                    try {
-                        if ($transaction->coin_type == DEFAULT_COIN_TYPE) {
-                            $settings = allsetting();
-                            $coinApi = new ERC20TokenApi();
-                            $requestData = [
-                                "amount_value" => (float)$transaction->amount,
-                                "from_address" => $settings['wallet_address'] ?? '',
-                                "to_address" => $transaction->address,
-                                "contracts" => $settings['private_key'] ?? ''
-                            ];
-                            $result = $coinApi->sendCustomToken($requestData);
-                            if ($result['success'] ==  true) {
-                                $transaction->transaction_hash = $result['data']->hash;
-                                $transaction->used_gas = $result['data']->used_gas;
-                                $transaction->status = STATUS_SUCCESS;
-                                $transaction->update();
-                                $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
+                    if ($transaction->address_type == ADDRESS_TYPE_INTERNAL) {
 
-                                return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
+                        $deposit = DepositeTransaction::where(['transaction_id' =>$transaction->transaction_hash, 'address' => $transaction->address])->update(['status' => STATUS_SUCCESS]);
+
+                        Wallet::where(['id' => $transaction->receiver_wallet_id])->increment('balance', $transaction->amount);
+                        $transaction->status = STATUS_SUCCESS;
+                        $transaction->save();
+
+                        $wallet_name = $transaction->wallet->name;
+                        $sender_info = User::find($transaction->user_id);
+                        $mail_info['to'] = $sender_info->email;
+                        $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                        $mail_info_address_type = 'Internal';
+                        $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Withdrawal ($transaction->amount $coin_name) approved.";
+                        $mail_info['email_message']="$transaction->amount $coin_name Withdrawal approved from $wallet_name. Transaction Information given below:";
+                        $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                        dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
+
+                        $receiver_wallet_address = Wallet::where('id',$transaction->receiver_wallet_id)->first();
+                        $wallet_name = $receiver_wallet_address->name;
+                        $sender_info = $receiver_wallet_address->user;
+                        $mail_info['to'] = $sender_info->email;
+                        $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                        $mail_info_address_type = 'Internal';
+                        $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Deposit ($transaction->amount $coin_name) approved.";
+                        $mail_info['email_message']="$transaction->amount $coin_name Deposit approved from $wallet_name. Transaction Information given below:";
+                        $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                        dispatch(new MailSend($mail_info))->onQueue('send-mail-deposit');
+
+                        return redirect()->back()->with('success', 'Pending withdrawal accepted Successfully.');
+
+                    } elseif ($transaction->address_type == ADDRESS_TYPE_EXTERNAL) {
+                        try {
+                            if ($transaction->coin_type == DEFAULT_COIN_TYPE) {
+                                $settings = allsetting();
+                                $coinApi = new ERC20TokenApi();
+                                $requestData = [
+                                    "amount_value" => (float)$transaction->amount,
+                                    "from_address" => $settings['wallet_address'] ?? '',
+                                    "to_address" => $transaction->address,
+                                    "contracts" => $settings['private_key'] ?? ''
+                                ];
+                                $result = $coinApi->sendCustomToken($requestData);
+                                if ($result['success'] ==  true) {
+                                    $transaction->transaction_hash = $result['data']->hash;
+                                    $transaction->used_gas = $result['data']->used_gas;
+                                    $transaction->status = STATUS_SUCCESS;
+                                    $transaction->update();
+                                    dispatch(new DistributeWithdrawalReferralBonus($transaction))->onQueue('referral');
+//                                    $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
+
+
+                                    $wallet_name = $transaction->wallet->name;
+                                    $sender_info = User::find($transaction->user_id);
+                                    $mail_info['to'] = $sender_info->email;
+                                    $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                                    $mail_info_address_type = 'External';
+                                    $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Withdrawal ($transaction->amount $coin_name) approved.";
+                                    $mail_info['email_message']="$transaction->amount $coin_name Withdrawal approved from $wallet_name. Transaction Information given below:";
+                                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
+
+
+                                    return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
+                                } else {
+                                    return redirect()->back()->with('dismiss', $result['message']);
+                                }
                             } else {
-                                return redirect()->back()->with('dismiss', $result['message']);
+                                $currency =  $transaction->coin_type;
+                                $coinpayment = new CoinPaymentsAPI();
+                                $response = $coinpayment->CreateWithdrawal($transaction->amount,$currency,$transaction->address);
+
+                                if (is_array($response) && isset($response['error']) && ($response['error'] == 'ok') ) {
+                                    $transaction->transaction_hash = $response['result']['id'];
+                                    $transaction->status = STATUS_SUCCESS;
+                                    $transaction->update();
+//                                    $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
+                                    dispatch(new DistributeWithdrawalReferralBonus($transaction))->onQueue('referral');
+
+                                    $wallet_name = $transaction->wallet->name;
+                                    $sender_info = User::find($transaction->user_id);
+                                    $mail_info['to'] = $sender_info->email;
+                                    $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                                    $mail_info_address_type = 'External';
+                                    $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Withdrawal ($transaction->amount $coin_name) approved.";
+                                    $mail_info['email_message']="$transaction->amount $coin_name Withdrawal approved from $wallet_name. Transaction Information given below:";
+                                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
+
+                                    return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
+
+                                } else {
+                                    return redirect()->back()->with('dismiss', $response['error']);
+                                }
                             }
-                        } else {
-                            $currency =  $transaction->coin_type;
-                            $coinpayment = new CoinPaymentsAPI();
-                            $response = $coinpayment->CreateWithdrawal($transaction->amount,$currency,$transaction->address);
 
-                            if (is_array($response) && isset($response['error']) && ($response['error'] == 'ok') ) {
-                                $transaction->transaction_hash = $response['result']['id'];
-                                $transaction->status = STATUS_SUCCESS;
-                                $transaction->update();
-                                $bonus = $affiliate_servcice->storeAffiliationHistory($transaction);
-
-                                return redirect()->back()->with('success', __('Pending withdrawal accepted Successfully.'));
-
-                            } else {
-                                return redirect()->back()->with('dismiss', $response['error']);
-                            }
+                        } catch(\Exception $e) {
+                            Log::info('adminAcceptPendingWithdrawal --> '.$e->getMessage());
+                            return redirect()->back()->with('dismiss', $e->getMessage());
                         }
-
-                    } catch(\Exception $e) {
-                        Log::info('adminAcceptPendingWithdrawal --> '.$e->getMessage());
-                        return redirect()->back()->with('dismiss', $response['error']);
                     }
+                } else {
+                    return redirect()->back()->with('dismiss', __('Transaction not found'));
                 }
             }
-
             return redirect()->back()->with('dismiss', __('Something went wrong! Please try again!'));
+        } catch (\Exception $e) {
+            Log::info('adminAcceptPendingWithdrawal --> '.$e->getMessage());
+            return redirect()->back()->with('dismiss', $e->getMessage());
         }
+
     }
 
     // pending withdrawal reject process
@@ -338,11 +509,93 @@ class TransactionController extends Controller
             $transaction = WithdrawHistory::where(['id' => $wdrl_id, 'status' => STATUS_PENDING])->firstOrFail();
 
             if (!empty($transaction)) {
+
+                $mail_info = [];
+                $sender_wallet_address = WalletAddressHistory::where('wallet_id',$transaction->wallet_id)->first()->address;
+                $coin_name = strtolower($transaction->wallet->coin_type);
+                $mail_info['mailTemplate'] = 'email.transaction_mail';
+                $withdraw_status = 'Rejected';
+
                 if ($transaction->address_type == ADDRESS_TYPE_INTERNAL) {
 
                     Wallet::where(['id' => $transaction->wallet_id])->increment('balance', $transaction->amount);
                     $transaction->status = STATUS_REJECTED;
                     $transaction->update();
+
+                    $wallet_name = $transaction->wallet->name;
+                    $sender_info = User::find($transaction->user_id);
+                    $mail_info['to'] = $sender_info->email;
+                    $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                    $mail_info_address_type = 'Internal';
+                    $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Withdrawal ($transaction->amount $coin_name) rejected.";
+                    $mail_info['email_message']="$transaction->amount $coin_name Withdrawal rejected from $wallet_name. Transaction Information given below:";
+                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
+
+                    $receiver_wallet_address = Wallet::where('id',$transaction->receiver_wallet_id)->first();
+                    $wallet_name = $receiver_wallet_address->name;
+                    $sender_info = $receiver_wallet_address->user;
+                    $mail_info['to'] = $sender_info->email;
+                    $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                    $mail_info_address_type = 'Internal';
+                    $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Deposit ($transaction->amount $coin_name) rejected.";
+                    $mail_info['email_message']="$transaction->amount $coin_name Deposit rejected from $wallet_name. Transaction Information given below:";
+                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                    dispatch(new MailSend($mail_info))->onQueue('send-mail-deposit');
 
                     $deposit = DepositeTransaction::where(['transaction_id' =>$transaction->transaction_hash, 'address' => $transaction->address])->update(['status' => STATUS_REJECTED]);
 
@@ -352,6 +605,43 @@ class TransactionController extends Controller
                     $transaction->status = STATUS_REJECTED;
 
                     $transaction->update();
+
+                    $wallet_name = $transaction->wallet->name;
+                    $sender_info = User::find($transaction->user_id);
+                    $mail_info['to'] = $sender_info->email;
+                    $mail_info['name'] = $sender_info->first_name.' '.$sender_info->last_name;
+                    $mail_info_address_type = 'External';
+                    $mail_info['subject'] = "TransactionID:<$transaction->transaction_hash> Withdrawal ($transaction->amount $coin_name) rejected.";
+                    $mail_info['email_message']="$transaction->amount $coin_name Withdrawal rejected from $wallet_name. Transaction Information given below:";
+                    $mail_info['email_message_table'] = "<table>
+                        <tbody>
+                            <tr>
+                                <td>Sender Address</td>
+                                <td>$sender_wallet_address</td>
+                            </tr>
+                            <tr>
+                                <td>Receiver Address</td>
+                                <td>$transaction->address</td>
+                            </tr>
+                            <tr>
+                                <td>Address Type</td>
+                                <td>$mail_info_address_type</td>
+                            </tr>
+                            <tr>
+                                <td>TransactionID</td>
+                                <td>$transaction->transaction_hash</td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td>$transaction->amount $coin_name</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td>$withdraw_status</td>
+                            </tr>
+                        </tbody>
+                    </table>";
+                    dispatch(new MailSend($mail_info))->onQueue('send-mail-withdrawal');
 
                     return redirect()->back()->with('success', __('Pending Withdrawal rejected Successfully.'));
                 }

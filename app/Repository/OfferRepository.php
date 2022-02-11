@@ -261,6 +261,8 @@ class OfferRepository
     }
 
     public function updateOfferWithDynamicRate(){
+
+        $rate = getCoinPaymentApiRates();
         $logger = new Logger();
         $offer_buys = Buy::where('rate_type','=',RATE_TYPE_DYNAMIC)->where('status','=',STATUS_ACTIVE)->get();
         $offer_sales = Sell::where('rate_type','=',RATE_TYPE_DYNAMIC)->where('status','=',STATUS_ACTIVE)->get();
@@ -271,10 +273,21 @@ class OfferRepository
             if(isset($market_price[$from][$to]) && !empty($market_price[$from][$to])){
                 $data['market_price'] = $market_price[$from][$to];
             }else{
-                $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
-                $json = file_get_contents($url); //,FALSE,$ctx);
-                $jsondata = json_decode($json, TRUE);
-                $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                if($rate){
+                    $btcRate = $rate[$to];
+                    if ($from == 'BTC') {
+                        $data['market_price'] = bcmul(1,(bcdiv(1, $btcRate['rate_btc'],8)),8);
+                    } else {
+                        $otherRate = $rate[$from];
+                        $toRate = bcdiv($btcRate['rate_btc'],$otherRate['rate_btc'],8);
+                        $data['market_price'] = bcmul(1, (bcdiv(1,$toRate,8)),8);
+                    }
+                }else{
+                    $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
+                    $json = file_get_contents($url); //,FALSE,$ctx);
+                    $jsondata = json_decode($json, TRUE);
+                    $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                }
                 $market_price[$from][$to] = $data['market_price'];
             }
             if ($data['market_price'] != $item->market_price) {
@@ -288,10 +301,21 @@ class OfferRepository
             if(isset($market_price[$from][$to]) && !empty($market_price[$from][$to])){
                 $data['market_price'] = $market_price[$from][$to];
             }else{
-                $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
-                $json = file_get_contents($url); //,FALSE,$ctx);
-                $jsondata = json_decode($json, TRUE);
-                $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                if($rate){
+                    $btcRate = $rate[$to];
+                    if ($from == 'BTC') {
+                        $data['market_price'] = bcmul(1,(bcdiv(1, $btcRate['rate_btc'],8)),8);
+                    } else {
+                        $otherRate = $rate[$from];
+                        $toRate = bcdiv($btcRate['rate_btc'],$otherRate['rate_btc'],8);
+                        $data['market_price'] = bcmul(1, (bcdiv(1,$toRate,8)),8);
+                    }
+                }else{
+                    $url = "https://min-api.cryptocompare.com/data/price?fsym=$from&tsyms=$to";
+                    $json = file_get_contents($url); //,FALSE,$ctx);
+                    $jsondata = json_decode($json, TRUE);
+                    $data['market_price'] = bcmul(1, $jsondata[$to],8);
+                }
                 $market_price[$from][$to] = $data['market_price'];
             }
             if ($data['market_price'] != $item->market_price) {

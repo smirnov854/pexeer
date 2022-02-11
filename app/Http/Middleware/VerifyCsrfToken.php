@@ -22,6 +22,10 @@ class VerifyCsrfToken extends Middleware
         'user/g2f-secret-save',
         'user/withdrawal-coin/callback',
         'user/withdrawal-coin/deposit/callback',
-        'user/withdrawal-coin/cancel-withdrawal'
+        'user/withdrawal-coin/cancel-withdrawal',
+        'user/report-user-order',
+        'user/update-feedback',
+        'user/cancel-trade',
+        'user/upload-payment-sleep'
     ];
 }

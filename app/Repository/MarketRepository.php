@@ -17,16 +17,15 @@ use App\Model\OrderDispute;
 use App\Model\Sell;
 use App\Model\Wallet;
 use App\Services\CoinPaymentsAPI;
-use App\Services\MailService;
 use App\Services\Logger;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use phpDocumentor\Reflection\Types\Null_;
 use Pusher\Pusher;
-
 
 class MarketRepository
 {
@@ -165,17 +164,6 @@ class MarketRepository
                 $notification_heading = Auth::user()->first_name." ".Auth::user()->last_name.__(' wants to trade with you');
                 $notification_msg = Auth::user()->first_name." ".Auth::user()->last_name.__(' wants to trade with you . The order id is '.$order->order_id);
                 $this->commonService->sendNotificationToUser($offer->user_id,$notification_heading,$notification_msg);
-
-
-                $mailService = new MailService();
-                $userName = Auth::user()->first_name." ".Auth::user()->last_name;
-                $user_data = User::find($offer->user_id);
-
-
-                $userEmail = $user_data->email;
-                $subject = "New trade";
-
-                $mailService->send('email.offer', [], $userEmail, $userName, $subject);
 
                 $response = [
                     'success' => true,
@@ -639,6 +627,7 @@ class MarketRepository
                         $escrow->update(['amount' => 0, 'status' => ESCROW_STATUS_RETURN]);
                     }
                     $this->commonService->sendNotificationToUser($partner_id,$reason_heading,$request->reason);
+                    $this->sendPageNotificationWhenStatusChange($order,$partner_id);
                     $response = [
                         'success' => true,
                         'message' => __('Order cancelled successfully')
@@ -720,6 +709,7 @@ class MarketRepository
                         'is_reported' => STATUS_ACTIVE,
                     ]);
                     $this->commonService->sendNotificationToUser($partner_id,$reason_heading,$request->reason);
+                    $this->sendPageNotificationWhenStatusChange($order,$partner_id);
                     $response = [
                         'success' => true,
                         'message' => __('Report created against order')
@@ -1001,6 +991,12 @@ class MarketRepository
             }
             if ($order) {
                 $order->update($data);
+                if ($order->buyer_id == $user_id) {
+                    $partner_id = $order->seller_id;
+                } else {
+                    $partner_id = $order->buyer_id;
+                }
+                $this->sendPageNotificationWhenStatusChange($order,$partner_id);
                 $response = [
                     'success' => true,
                     'message' => __('Feedback updated successfully ')
@@ -1029,7 +1025,36 @@ class MarketRepository
             $channel = 'sendorderstatus_'.$user_id.'_'.$order->id;
             $config = config('broadcasting.connections.pusher');
             $pusher = new Pusher($config['key'], $config['secret'], $config['app_id'], $config['options']);
-            $test =  $pusher->trigger($channel , 'receive_order_status', $order);
+            $data['html'] = $this->testGetDetails($order);
+            $test =  $pusher->trigger($channel , 'receive_order_status', $data);
         } catch (\Exception $exception) {}
     }
+
+    public function testGetDetails($order)
+    {
+        $data = [];
+        $id = $order->id;
+        $coin = Coin::where('type', $order->coin_type)->first();
+        if($order->buyer_id == Auth::id()) {
+            $sender_id = $order->seller_id;
+            $data['type'] = 'seller';
+            $data['title'] = __('Sell ').check_default_coin_type($order->coin_type).__(' to '). $order->buyer->first_name.' '.$order->buyer->last_name ;
+            $data['type_text'] = __('Sell ').check_default_coin_type($order->coin_type).__(' to ');
+            $data['check_balance'] = $this->check_wallet_balance_for_escrow(Auth::id(),$order, $coin);
+        }else{
+            $sender_id = $order->buyer_id;
+            $data['type'] = 'buyer';
+            $data['title'] = __('Buy ').check_default_coin_type($order->coin_type).__(' from '). $order->seller->first_name.' '.$order->seller->last_name ;
+            $data['type_text'] = __('Buy ').check_default_coin_type($order->coin_type).__(' from ');
+        }
+        $data['item'] = $order;
+        if($order->is_reported == STATUS_ACTIVE) {
+            $data['report'] = OrderDispute::where('order_id', $order->id)->first();
+        }
+        $data['selected_user'] = User::find($sender_id);
+        $html = '';
+        $html .= View::make('user.marketplace.market.order.rightside',$data);
+        return $html;
+    }
+
 }

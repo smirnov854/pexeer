@@ -2645,3 +2645,15 @@ function get_user_feedback_rate($user_id)
     }
     return number_format($userFeedback,2);
 }
+
+
+function getCoinPaymentApiRates()
+{
+    $rate = [];
+    if(!empty(settings('COIN_PAYMENT_PUBLIC_KEY'))) {
+        $coinPayment = new CoinPaymentsAPI();
+        $rate = $coinPayment->GetRates()['result'];
+        return $rate;
+    }
+    return $rate;
+}

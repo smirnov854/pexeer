@@ -7,7 +7,7 @@
             <div class="user-form">
                 <div class="right">
                     <div class="form-top">
-                        <a class="auth-logo" href="javascript:">
+                        <a class="auth-logo" href="{{route('home')}}">
                             <img src="{{show_image(1,'login_logo')}}" class="img-fluid" alt="">
                         </a>
                         <h2>{{__('Two Factor Authentication')}}</h2>

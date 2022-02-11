@@ -76,7 +76,11 @@
                 </div>
                 <div class="col-lg-4 col-sm-6 col-6 order-lg-0 order-2">
                     <div class="header-actions">
-                        <a href="{{route('login')}}" class="btn cbtn1">{{__('Sign in')}}</a>
+                        @if(Auth::user())
+                            <a @if(Auth::user()->role == USER_ROLE_USER) href="{{route('userDashboard')}}" @else href="{{route('adminDashboard')}}" @endif class="btn cbtn1">{{__('Dashboard')}}</a>
+                        @else
+                            <a href="{{route('login')}}" class="btn cbtn1">{{__('Sign in')}}</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -203,6 +207,9 @@
 </div>
 
 @include("landing.$active_page_key.footer_area")
+
+@include('cookie-accept');
+
 <script src="{{asset('assets/common/js/jquery.min.js')}}"></script>
 <script src="{{asset('assets/common/js/popper.min.js')}}"></script>
 <script src="{{asset('assets/common/js/bootstrap.min.js')}}"></script>

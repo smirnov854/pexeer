@@ -374,7 +374,7 @@
     </div>
 </div>
 <!-- /main wrapper -->
-
+@include('cookie-accept');
 <!-- JavaScript -->
 <script src="{{asset('assets/common/js/jquery.min.js')}}"></script>
 <script src="{{asset('assets/common/js/popper.min.js')}}"></script>
