@@ -2,6 +2,7 @@
 
 namespace Maatwebsite\Excel;
 
+use Maatwebsite\Excel\Cache\CacheManager;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
@@ -145,6 +146,7 @@ class Writer
         $this->clearListeners();
         $this->spreadsheet->disconnectWorksheets();
         unset($this->spreadsheet);
+        app(CacheManager::class)->flush();
 
         return $temporaryFile;
     }

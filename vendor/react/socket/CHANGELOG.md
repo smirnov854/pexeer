@@ -1,18 +1,6 @@
 # Changelog
 
-## 1.11.0 (2022-01-14)
-
-*   Feature: Full support for PHP 8.1 release.
-    (#277 by @clue)
-
-*   Feature: Avoid dependency on `ext-filter`.
-    (#279 by @clue)
-
-*   Improve test suite to skip FD test when hitting memory limit
-    and skip legacy TLS 1.0 tests if disabled by system.
-    (#278 and #281 by @clue and #283 by @SimonFrings)
-
-## 1.10.0 (2021-11-29)
+## 1.10.0 (2021-09-13)
 
 *   Feature: Support listening on existing file descriptors (FDs) with `SocketServer`.
     (#269 by @clue)
@@ -21,7 +9,9 @@
     $socket = new React\Socket\SocketSever('php://fd/3');
     ```
 
-    This is particularly useful when using [systemd socket activation](https://www.freedesktop.org/software/systemd/man/systemd.socket.html) like this:
+    This is particularly useful when using
+    [systemd socket activation](https://www.freedesktop.org/software/systemd/man/systemd.socket.html)
+    like this:
 
     ```bash
     $ systemd-socket-activate -l 8000 php examples/03-http-server.php php://fd/3

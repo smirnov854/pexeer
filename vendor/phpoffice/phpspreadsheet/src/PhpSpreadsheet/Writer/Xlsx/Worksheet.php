@@ -145,9 +145,7 @@ class Worksheet extends WriterPart
         $autoFilterRange = $worksheet->getAutoFilter()->getRange();
         if (!empty($autoFilterRange)) {
             $objWriter->writeAttribute('filterMode', 1);
-            if (!$worksheet->getAutoFilter()->getEvaluated()) {
-                $worksheet->getAutoFilter()->showHideRows();
-            }
+            $worksheet->getAutoFilter()->showHideRows();
         }
 
         // tabColor

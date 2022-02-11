@@ -7,10 +7,10 @@
                         <a href="{{route('home')}}" class="brand-logo"><img src="{{show_image(1,'logo')}}" alt="logo" /></a>
                         <p class="about-text">{{$settings['footer_description'] ?? 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Magni nisi cumque delectus.'}}</p>
                         <ul class="social-media">
-                            <li><a target="_blank" href="{{$settings['facebook_link'] ?? '#'}}"><i class="fab fa-facebook-f"></i></a></li>
-                            <li><a target="_blank" href="{{$settings['twitter_link'] ?? '#'}}"><i class="fab fa-twitter"></i></a></li>
-                            <li><a target="_blank" href="{{$settings['linkedin_link'] ?? '#'}}"><i class="fab fa-linkedin-in"></i></a></li>
-                            <li><a target="_blank" href="{{$settings['instagram_link'] ?? '#'}}"><i class="fab fa-instagram"></i></a></li>
+                            <li><a href="{{$settings['facebook_link'] ?? '#'}}"><i class="fab fa-facebook-f"></i></a></li>
+                            <li><a href="{{$settings['twitter_link'] ?? '#'}}"><i class="fab fa-twitter"></i></a></li>
+                            <li><a href="{{$settings['linkedin_link'] ?? '#'}}"><i class="fab fa-linkedin-in"></i></a></li>
+                            <li><a href="{{$settings['instagram_link'] ?? '#'}}"><i class="fab fa-instagram"></i></a></li>
                         </ul>
                     </div>
                 </div>

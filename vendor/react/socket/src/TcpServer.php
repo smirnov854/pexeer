@@ -160,7 +160,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             );
         }
 
-        if (@\inet_pton(\trim($parts['host'], '[]')) === false) {
+        if (false === \filter_var(\trim($parts['host'], '[]'), \FILTER_VALIDATE_IP)) {
             throw new \InvalidArgumentException(
                 'Given URI "' . $uri . '" does not contain a valid host IP (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22

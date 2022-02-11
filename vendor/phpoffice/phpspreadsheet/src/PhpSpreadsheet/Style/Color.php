@@ -45,9 +45,6 @@ class Color extends Supervisor
      */
     protected $argb;
 
-    /** @var bool */
-    private $hasChanged = false;
-
     /**
      * Create a new Color.
      *
@@ -78,15 +75,12 @@ class Color extends Supervisor
      */
     public function getSharedComponent()
     {
-        /** @var Style */
-        $parent = $this->parent;
         /** @var Border|Fill $sharedComponent */
-        $sharedComponent = $parent->getSharedComponent();
-        if ($sharedComponent instanceof Fill) {
-            if ($this->parentPropertyName === 'endColor') {
-                return $sharedComponent->getEndColor();
-            }
-
+        $sharedComponent = $this->parent->getSharedComponent();
+        if ($this->parentPropertyName === 'endColor') {
+            return $sharedComponent->getEndColor();
+        }
+        if ($this->parentPropertyName === 'startColor') {
             return $sharedComponent->getStartColor();
         }
 
@@ -102,10 +96,7 @@ class Color extends Supervisor
      */
     public function getStyleArray($array)
     {
-        /** @var Style */
-        $parent = $this->parent;
-
-        return $parent->getStyleArray([$this->parentPropertyName => $array]);
+        return $this->parent->getStyleArray([$this->parentPropertyName => $array]);
     }
 
     /**
@@ -162,7 +153,6 @@ class Color extends Supervisor
      */
     public function setARGB(?string $colorValue = self::COLOR_BLACK)
     {
-        $this->hasChanged = true;
         if ($colorValue === '' || $colorValue === null) {
             $colorValue = self::COLOR_BLACK;
         } elseif (!$this->validateColor($colorValue, self::VALIDATE_ARGB_SIZE)) {
@@ -200,7 +190,6 @@ class Color extends Supervisor
      */
     public function setRGB(?string $colorValue = self::COLOR_BLACK)
     {
-        $this->hasChanged = true;
         if ($colorValue === '' || $colorValue === null) {
             $colorValue = '000000';
         } elseif (!$this->validateColor($colorValue, self::VALIDATE_RGB_SIZE)) {
@@ -231,7 +220,7 @@ class Color extends Supervisor
     {
         $colour = substr($rgbValue, $offset, 2);
 
-        return ($hex) ? $colour : (int) hexdec($colour);
+        return ($hex) ? $colour : hexdec($colour);
     }
 
     /**
@@ -420,14 +409,5 @@ class Color extends Supervisor
         $this->exportArray2($exportedArray, 'argb', $this->getARGB());
 
         return $exportedArray;
-    }
-
-    public function getHasChanged(): bool
-    {
-        if ($this->isSupervisor) {
-            return $this->getSharedComponent()->hasChanged;
-        }
-
-        return $this->hasChanged;
     }
 }

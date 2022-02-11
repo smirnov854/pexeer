@@ -26,7 +26,7 @@
                                         <div class="col-xl-5">
                                             @include('user.marketplace.market.order.leftside')
                                         </div>
-                                        <div class="col-xl-7 rightSideDiv">
+                                        <div class="col-xl-7">
                                             @include('user.marketplace.market.order.rightside')
                                         </div>
                                     </div>
@@ -55,10 +55,16 @@
                         '<div class="user-img"> <img src="' + image + '"> </div>' +
                         '<div class="msg">' + '<p>' + message + '</p>' + '</div></li>');
                     {{--let audio = new Audio('{{asset('assets/chin-up.mp3')}}');--}}
-                    {{--audio.play();--}}
+                    // audio.play();
 
                     $('.inner-message').scrollTop($('.inner-message')[0].scrollHeight);
                 });
+            $('body').keydown(function(event) {
+                if(event.which == 13) {
+                    $('form#idForm').submit();
+                    return;
+                }
+            });
 
             $('form#idForm').on('submit', function (e) {
                 e.preventDefault();
@@ -95,7 +101,16 @@
 
             Echo.channel('sendorderstatus_'+'{{Auth::id()}}'+'_'+'{{$item->id}}')
                 .listen('.receive_order_status', (data) => {
-                    $('.rightSideDiv').html(data.html);
+
+                    console.log(data.status);
+                    if (data.status == 1) {
+                        document.getElementById("orderEscrow").className += " step-complete";
+                    } else if(data.status == 2) {
+                        document.getElementById("orderPayment").className += " step-complete";
+                    } else if(data.status == 3) {
+                        document.getElementById("orderComplete").className += " step-complete";
+                    }
+
                 });
 
         });

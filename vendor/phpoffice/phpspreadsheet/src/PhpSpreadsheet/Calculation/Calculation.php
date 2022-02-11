@@ -5229,22 +5229,15 @@ class Calculation
         return $result;
     }
 
-    /**
-     * Trigger an error, but nicely, if need be.
-     *
-     * @return false
-     */
-    protected function raiseFormulaError(string $errorMessage)
+    // trigger an error, but nicely, if need be
+    protected function raiseFormulaError($errorMessage)
     {
         $this->formulaError = $errorMessage;
         $this->cyclicReferenceStack->clear();
         if (!$this->suppressFormulaErrors) {
             throw new Exception($errorMessage);
         }
-
-        if (strlen($errorMessage) > 0) {
-            trigger_error($errorMessage, E_USER_ERROR);
-        }
+        trigger_error($errorMessage, E_USER_ERROR);
 
         return false;
     }

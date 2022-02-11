@@ -371,7 +371,7 @@ class Worksheet implements IComparable
         $this->defaultRowDimension = new RowDimension(null);
         // Default column dimension
         $this->defaultColumnDimension = new ColumnDimension(null);
-        $this->autoFilter = new AutoFilter('', $this);
+        $this->autoFilter = new AutoFilter(null, $this);
     }
 
     /**
@@ -1432,57 +1432,30 @@ class Worksheet implements IComparable
     /**
      * Get conditional styles for a cell.
      *
-     * @param string $coordinate eg: 'A1' or 'A1:A3'.
-     *          If a single cell is referenced, then the array of conditional styles will be returned if the cell is
-     *               included in a conditional style range.
-     *          If a range of cells is specified, then the styles will only be returned if the range matches the entire
-     *               range of the conditional.
+     * @param string $coordinate eg: 'A1'
      *
      * @return Conditional[]
      */
     public function getConditionalStyles($coordinate)
     {
         $coordinate = strtoupper($coordinate);
-        if (strpos($coordinate, ':') !== false) {
-            return $this->conditionalStylesCollection[$coordinate] ?? [];
+        if (!isset($this->conditionalStylesCollection[$coordinate])) {
+            $this->conditionalStylesCollection[$coordinate] = [];
         }
 
-        $cell = $this->getCell($coordinate);
-        foreach (array_keys($this->conditionalStylesCollection) as $conditionalRange) {
-            if ($cell->isInRange($conditionalRange)) {
-                return $this->conditionalStylesCollection[$conditionalRange];
-            }
-        }
-
-        return [];
+        return $this->conditionalStylesCollection[$coordinate];
     }
 
     /**
      * Do conditional styles exist for this cell?
      *
-     * @param string $coordinate eg: 'A1' or 'A1:A3'.
-     *          If a single cell is specified, then this method will return true if that cell is included in a
-     *               conditional style range.
-     *          If a range of cells is specified, then true will only be returned if the range matches the entire
-     *               range of the conditional.
+     * @param string $coordinate eg: 'A1'
      *
      * @return bool
      */
     public function conditionalStylesExists($coordinate)
     {
-        $coordinate = strtoupper($coordinate);
-        if (strpos($coordinate, ':') !== false) {
-            return isset($this->conditionalStylesCollection[strtoupper($coordinate)]);
-        }
-
-        $cell = $this->getCell($coordinate);
-        foreach (array_keys($this->conditionalStylesCollection) as $conditionalRange) {
-            if ($cell->isInRange($conditionalRange)) {
-                return true;
-            }
-        }
-
-        return false;
+        return isset($this->conditionalStylesCollection[strtoupper($coordinate)]);
     }
 
     /**
@@ -1941,10 +1914,12 @@ class Worksheet implements IComparable
 
     /**
      * Remove autofilter.
+     *
+     * @return $this
      */
-    public function removeAutoFilter(): self
+    public function removeAutoFilter()
     {
-        $this->autoFilter->setRange('');
+        $this->autoFilter->setRange(null);
 
         return $this;
     }

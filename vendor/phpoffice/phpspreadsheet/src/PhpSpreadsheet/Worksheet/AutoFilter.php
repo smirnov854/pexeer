@@ -35,23 +35,12 @@ class AutoFilter
      */
     private $columns = [];
 
-    /** @var bool */
-    private $evaluated = false;
-
-    public function getEvaluated(): bool
-    {
-        return $this->evaluated;
-    }
-
-    public function setEvaluated(bool $value): void
-    {
-        $this->evaluated = $value;
-    }
-
     /**
      * Create a new AutoFilter.
+     *
+     * @param string $range Cell range (i.e. A1:E10)
      */
-    public function __construct(string $range = '', ?Worksheet $worksheet = null)
+    public function __construct($range = '', ?Worksheet $worksheet = null)
     {
         $this->range = $range;
         $this->workSheet = $worksheet;
@@ -74,7 +63,6 @@ class AutoFilter
      */
     public function setParent(?Worksheet $worksheet = null)
     {
-        $this->evaluated = false;
         $this->workSheet = $worksheet;
 
         return $this;
@@ -91,11 +79,14 @@ class AutoFilter
     }
 
     /**
-     * Set AutoFilter Cell Range.
+     * Set AutoFilter Range.
+     *
+     * @param string $range Cell range (i.e. A1:E10)
+     *
+     * @return $this
      */
-    public function setRange(string $range): self
+    public function setRange($range)
     {
-        $this->evaluated = false;
         // extract coordinate
         [$worksheet, $range] = Worksheet::extractSheetTitle($range, true);
         if (empty($range)) {
@@ -117,20 +108,6 @@ class AutoFilter
             $colIndex = Coordinate::columnIndexFromString($key);
             if (($rangeStart[0] > $colIndex) || ($rangeEnd[0] < $colIndex)) {
                 unset($this->columns[$key]);
-            }
-        }
-
-        return $this;
-    }
-
-    public function setRangeToMaxRow(): self
-    {
-        $this->evaluated = false;
-        if ($this->workSheet !== null) {
-            $thisrange = $this->range;
-            $range = preg_replace('/\\d+$/', (string) $this->workSheet->getHighestRow(), $thisrange) ?? '';
-            if ($range !== $thisrange) {
-                $this->setRange($range);
             }
         }
 
@@ -224,7 +201,6 @@ class AutoFilter
      */
     public function setColumn($columnObjectOrString)
     {
-        $this->evaluated = false;
         if ((is_string($columnObjectOrString)) && (!empty($columnObjectOrString))) {
             $column = $columnObjectOrString;
         } elseif (is_object($columnObjectOrString) && ($columnObjectOrString instanceof AutoFilter\Column)) {
@@ -254,7 +230,6 @@ class AutoFilter
      */
     public function clearColumn($column)
     {
-        $this->evaluated = false;
         $this->testColumnInRange($column);
 
         if (isset($this->columns[$column])) {
@@ -278,7 +253,6 @@ class AutoFilter
      */
     public function shiftColumn($fromColumn, $toColumn)
     {
-        $this->evaluated = false;
         $fromColumn = strtoupper($fromColumn);
         $toColumn = strtoupper($toColumn);
 
@@ -1028,7 +1002,6 @@ class AutoFilter
             //    Set show/hide for the row based on the result of the autoFilter result
             $this->workSheet->getRowDimension((int) $row)->setVisible($result);
         }
-        $this->evaluated = true;
 
         return $this;
     }

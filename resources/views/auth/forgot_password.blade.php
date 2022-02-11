@@ -7,7 +7,7 @@
             <div class="user-form">
                 <div class="right">
                     <div class="form-top">
-                        <a class="auth-logo" href="{{route('home')}}">
+                        <a class="auth-logo" href="javascript:">
                             <img src="{{show_image(1,'login_logo')}}" class="img-fluid" alt="">
                         </a>
                         <p>{{__('Forgot Password')}}</p>

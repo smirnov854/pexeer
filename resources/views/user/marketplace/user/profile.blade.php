@@ -64,7 +64,7 @@
                                             <li>
                                                 <span>{{__('Phone')}}</span>
                                                 <span class="cp-user-dot">:</span>
-                                                <span>{{$user->phone}}</span>
+                                                <span>{{$user->phone ? 'Verified' : ''}}</span>
                                             </li>
                                             <li>
                                                 <span>{{__('Phone Verification')}}</span>
@@ -169,7 +169,7 @@
                         <div class="col-sm-12">
                             <div class="cp-user-card-header-area">
                                 <div class="title">
-                                    <h4 id="list_title">{{__('Sell coin to these buyers')}}</h4>
+                                    <h4 id="list_title">{{__('Sell coin to these sellers')}}</h4>
                                 </div>
                             </div>
                             <div class="cp-user-wallet-table table-responsive buy-table">

@@ -61,7 +61,6 @@ class AutoFilter
             //    Check for dynamic filters
             $this->readTopTenAutoFilter($filterColumn, $column);
         }
-        $autoFilter->setEvaluated(true);
     }
 
     private function readDateRangeAutoFilter(SimpleXMLElement $filters, Column $column): void

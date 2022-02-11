@@ -1,4 +1,3 @@
-@include('cookie-accept');
 <!-- Js file  -->
 <script src="{{asset('assets/landing/custom/assets/js/jquery-3.6.0.min.js')}}"></script>
 <script src="{{asset('assets/landing/custom/assets/js/bootstrap.bundle.min.js')}}"></script>

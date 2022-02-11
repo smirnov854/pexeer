@@ -102,7 +102,7 @@ class MemoryDrawing extends BaseDrawing
             $transparent = imagecolortransparent($this->imageResource);
             if ($transparent >= 0) {
                 $rgb = imagecolorsforindex($this->imageResource, $transparent);
-                if (empty($rgb)) {
+                if ($rgb === false) {
                     throw new Exception('Could not get image colors');
                 }
 

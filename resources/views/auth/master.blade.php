@@ -13,7 +13,6 @@
     <meta property="og:site_name" content="{{allsetting('app_title')}}"/>
     <meta property="og:url" content="{{url()->current()}}"/>
     <meta itemprop="image" content="{{show_image(1,'logo')}}" />
-    <link rel="shortcut icon" href="{{landingPageImage('favicon','images/Pexeer.svg')}}">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{asset('assets/common/css/bootstrap.min.css')}}">
     <!-- metismenu CSS -->

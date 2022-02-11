@@ -13,44 +13,35 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Style\Style;
 use SimpleXMLElement;
-use stdClass;
 
 class Styles extends BaseParserClass
 {
     /**
      * Theme instance.
      *
-     * @var ?Theme
+     * @var Theme
      */
-    private $theme;
+    private static $theme;
 
-    /** @var array */
     private $styles = [];
 
-    /** @var array */
     private $cellStyles = [];
 
-    /** @var SimpleXMLElement */
     private $styleXml;
 
-    public function setStyleXml(SimpleXmlElement $styleXml): void
+    public function __construct(SimpleXMLElement $styleXml)
     {
         $this->styleXml = $styleXml;
     }
 
-    public function setTheme(Theme $theme): void
+    public function setStyleBaseData(?Theme $theme = null, $styles = [], $cellStyles = []): void
     {
-        $this->theme = $theme;
-    }
-
-    public function setStyleBaseData(?Theme $theme = null, array $styles = [], array $cellStyles = []): void
-    {
-        $this->theme = $theme;
+        self::$theme = $theme;
         $this->styles = $styles;
         $this->cellStyles = $cellStyles;
     }
 
-    public function readFontStyle(Font $fontStyle, SimpleXMLElement $fontStyleXml): void
+    public static function readFontStyle(Font $fontStyle, SimpleXMLElement $fontStyleXml): void
     {
         if (isset($fontStyleXml->name, $fontStyleXml->name['val'])) {
             $fontStyle->setName((string) $fontStyleXml->name['val']);
@@ -69,7 +60,7 @@ class Styles extends BaseParserClass
                 !isset($fontStyleXml->strike['val']) || self::boolean((string) $fontStyleXml->strike['val'])
             );
         }
-        $fontStyle->getColor()->setARGB($this->readColor($fontStyleXml->color));
+        $fontStyle->getColor()->setARGB(self::readColor($fontStyleXml->color));
 
         if (isset($fontStyleXml->u) && !isset($fontStyleXml->u['val'])) {
             $fontStyle->setUnderline(Font::UNDERLINE_SINGLE);
@@ -87,18 +78,18 @@ class Styles extends BaseParserClass
         }
     }
 
-    private function readNumberFormat(NumberFormat $numfmtStyle, SimpleXMLElement $numfmtStyleXml): void
+    private static function readNumberFormat(NumberFormat $numfmtStyle, SimpleXMLElement $numfmtStyleXml): void
     {
         if ($numfmtStyleXml->count() === 0) {
             return;
         }
         $numfmt = Xlsx::getAttributes($numfmtStyleXml);
         if ($numfmt->count() > 0 && isset($numfmt['formatCode'])) {
-            $numfmtStyle->setFormatCode(self::formatGeneral((string) $numfmt['formatCode']));
+            $numfmtStyle->setFormatCode((string) $numfmt['formatCode']);
         }
     }
 
-    public function readFillStyle(Fill $fillStyle, SimpleXMLElement $fillStyleXml): void
+    public static function readFillStyle(Fill $fillStyle, SimpleXMLElement $fillStyleXml): void
     {
         if ($fillStyleXml->gradientFill) {
             /** @var SimpleXMLElement $gradientFill */
@@ -108,16 +99,16 @@ class Styles extends BaseParserClass
             }
             $fillStyle->setRotation((float) ($gradientFill['degree']));
             $gradientFill->registerXPathNamespace('sml', Namespaces::MAIN);
-            $fillStyle->getStartColor()->setARGB($this->readColor(self::getArrayItem($gradientFill->xpath('sml:stop[@position=0]'))->color));
-            $fillStyle->getEndColor()->setARGB($this->readColor(self::getArrayItem($gradientFill->xpath('sml:stop[@position=1]'))->color));
+            $fillStyle->getStartColor()->setARGB(self::readColor(self::getArrayItem($gradientFill->xpath('sml:stop[@position=0]'))->color));
+            $fillStyle->getEndColor()->setARGB(self::readColor(self::getArrayItem($gradientFill->xpath('sml:stop[@position=1]'))->color));
         } elseif ($fillStyleXml->patternFill) {
             $defaultFillStyle = Fill::FILL_NONE;
             if ($fillStyleXml->patternFill->fgColor) {
-                $fillStyle->getStartColor()->setARGB($this->readColor($fillStyleXml->patternFill->fgColor, true));
+                $fillStyle->getStartColor()->setARGB(self::readColor($fillStyleXml->patternFill->fgColor, true));
                 $defaultFillStyle = Fill::FILL_SOLID;
             }
             if ($fillStyleXml->patternFill->bgColor) {
-                $fillStyle->getEndColor()->setARGB($this->readColor($fillStyleXml->patternFill->bgColor, true));
+                $fillStyle->getEndColor()->setARGB(self::readColor($fillStyleXml->patternFill->bgColor, true));
                 $defaultFillStyle = Fill::FILL_SOLID;
             }
 
@@ -129,7 +120,7 @@ class Styles extends BaseParserClass
         }
     }
 
-    public function readBorderStyle(Borders $borderStyle, SimpleXMLElement $borderStyleXml): void
+    public static function readBorderStyle(Borders $borderStyle, SimpleXMLElement $borderStyleXml): void
     {
         $diagonalUp = self::boolean((string) $borderStyleXml['diagonalUp']);
         $diagonalDown = self::boolean((string) $borderStyleXml['diagonalDown']);
@@ -143,24 +134,24 @@ class Styles extends BaseParserClass
             $borderStyle->setDiagonalDirection(Borders::DIAGONAL_BOTH);
         }
 
-        $this->readBorder($borderStyle->getLeft(), $borderStyleXml->left);
-        $this->readBorder($borderStyle->getRight(), $borderStyleXml->right);
-        $this->readBorder($borderStyle->getTop(), $borderStyleXml->top);
-        $this->readBorder($borderStyle->getBottom(), $borderStyleXml->bottom);
-        $this->readBorder($borderStyle->getDiagonal(), $borderStyleXml->diagonal);
+        self::readBorder($borderStyle->getLeft(), $borderStyleXml->left);
+        self::readBorder($borderStyle->getRight(), $borderStyleXml->right);
+        self::readBorder($borderStyle->getTop(), $borderStyleXml->top);
+        self::readBorder($borderStyle->getBottom(), $borderStyleXml->bottom);
+        self::readBorder($borderStyle->getDiagonal(), $borderStyleXml->diagonal);
     }
 
-    private function readBorder(Border $border, SimpleXMLElement $borderXml): void
+    private static function readBorder(Border $border, SimpleXMLElement $borderXml): void
     {
         if (isset($borderXml['style'])) {
             $border->setBorderStyle((string) $borderXml['style']);
         }
         if (isset($borderXml->color)) {
-            $border->getColor()->setARGB($this->readColor($borderXml->color));
+            $border->getColor()->setARGB(self::readColor($borderXml->color));
         }
     }
 
-    public function readAlignmentStyle(Alignment $alignment, SimpleXMLElement $alignmentXml): void
+    public static function readAlignmentStyle(Alignment $alignment, SimpleXMLElement $alignmentXml): void
     {
         $alignment->setHorizontal((string) $alignmentXml['horizontal']);
         $alignment->setVertical((string) $alignmentXml['vertical']);
@@ -183,62 +174,43 @@ class Styles extends BaseParserClass
         );
     }
 
-    private static function formatGeneral(string $formatString): string
-    {
-        if ($formatString === 'GENERAL') {
-            $formatString = NumberFormat::FORMAT_GENERAL;
-        }
-
-        return $formatString;
-    }
-
-    /**
-     * Read style.
-     *
-     * @param SimpleXMLElement|stdClass $style
-     */
-    public function readStyle(Style $docStyle, $style): void
+    private function readStyle(Style $docStyle, $style): void
     {
         if ($style->numFmt instanceof SimpleXMLElement) {
-            $this->readNumberFormat($docStyle->getNumberFormat(), $style->numFmt);
+            self::readNumberFormat($docStyle->getNumberFormat(), $style->numFmt);
         } else {
-            $docStyle->getNumberFormat()->setFormatCode(self::formatGeneral((string) $style->numFmt));
+            $docStyle->getNumberFormat()->setFormatCode($style->numFmt);
         }
 
         if (isset($style->font)) {
-            $this->readFontStyle($docStyle->getFont(), $style->font);
+            self::readFontStyle($docStyle->getFont(), $style->font);
         }
 
         if (isset($style->fill)) {
-            $this->readFillStyle($docStyle->getFill(), $style->fill);
+            self::readFillStyle($docStyle->getFill(), $style->fill);
         }
 
         if (isset($style->border)) {
-            $this->readBorderStyle($docStyle->getBorders(), $style->border);
+            self::readBorderStyle($docStyle->getBorders(), $style->border);
         }
 
-        if (isset($style->alignment)) {
-            $this->readAlignmentStyle($docStyle->getAlignment(), $style->alignment);
+        if (isset($style->alignment->alignment)) {
+            self::readAlignmentStyle($docStyle->getAlignment(), $style->alignment);
         }
 
         // protection
         if (isset($style->protection)) {
-            $this->readProtectionLocked($docStyle, $style);
-            $this->readProtectionHidden($docStyle, $style);
+            self::readProtectionLocked($docStyle, $style);
+            self::readProtectionHidden($docStyle, $style);
         }
 
         // top-level style settings
         if (isset($style->quotePrefix)) {
-            $docStyle->setQuotePrefix((bool) $style->quotePrefix);
+            $docStyle->setQuotePrefix(true);
         }
     }
 
-    /**
-     * Read protection locked attribute.
-     *
-     * @param SimpleXMLElement|stdClass $style
-     */
-    public function readProtectionLocked(Style $docStyle, $style): void
+    public static function readProtectionLocked(Style $docStyle, $style): void
     {
         if (isset($style->protection['locked'])) {
             if (self::boolean((string) $style->protection['locked'])) {
@@ -249,12 +221,7 @@ class Styles extends BaseParserClass
         }
     }
 
-    /**
-     * Read protection hidden attribute.
-     *
-     * @param SimpleXMLElement|stdClass $style
-     */
-    public function readProtectionHidden(Style $docStyle, $style): void
+    public static function readProtectionHidden(Style $docStyle, $style): void
     {
         if (isset($style->protection['hidden'])) {
             if (self::boolean((string) $style->protection['hidden'])) {
@@ -265,18 +232,18 @@ class Styles extends BaseParserClass
         }
     }
 
-    public function readColor(SimpleXMLElement $color, bool $background = false): string
+    public static function readColor($color, $background = false)
     {
         if (isset($color['rgb'])) {
             return (string) $color['rgb'];
         } elseif (isset($color['indexed'])) {
-            return Color::indexedColor((int) ($color['indexed'] - 7), $background)->getARGB() ?? '';
+            return Color::indexedColor($color['indexed'] - 7, $background)->getARGB();
         } elseif (isset($color['theme'])) {
-            if ($this->theme !== null) {
-                $returnColour = $this->theme->getColourByIndex((int) $color['theme']);
+            if (self::$theme !== null) {
+                $returnColour = self::$theme->getColourByIndex((int) $color['theme']);
                 if (isset($color['tint'])) {
                     $tintAdjust = (float) $color['tint'];
-                    $returnColour = Color::changeBrightness($returnColour ?? '', $tintAdjust);
+                    $returnColour = Color::changeBrightness($returnColour, $tintAdjust);
                 }
 
                 return 'FF' . $returnColour;
@@ -286,7 +253,7 @@ class Styles extends BaseParserClass
         return ($background) ? 'FFFFFFFF' : 'FF000000';
     }
 
-    public function dxfs(bool $readDataOnly = false): array
+    public function dxfs($readDataOnly = false)
     {
         $dxfs = [];
         if (!$readDataOnly && $this->styleXml) {
@@ -318,20 +285,13 @@ class Styles extends BaseParserClass
         return $dxfs;
     }
 
-    public function styles(): array
+    public function styles()
     {
         return $this->styles;
     }
 
-    /**
-     * Get array item.
-     *
-     * @param mixed $array (usually array, in theory can be false)
-     *
-     * @return stdClass
-     */
-    private static function getArrayItem($array, int $key = 0)
+    private static function getArrayItem($array, $key = 0)
     {
-        return is_array($array) ? ($array[$key] ?? null) : null;
+        return $array[$key] ?? null;
     }
 }

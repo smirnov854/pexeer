@@ -150,7 +150,7 @@
                                 <div class="col-sm-12">
                                     <div class="cp-user-card-header-area">
                                         <div class="title">
-                                            <h4 id="list_title">{{__('Sell ')}} {{check_default_coin_type($coins_type)}} {{__(' to these buyers')}}</h4>
+                                            <h4 id="list_title">{{__('Sell ')}} {{check_default_coin_type($coins_type)}} {{__(' to these sellers')}}</h4>
                                         </div>
                                     </div>
                                     <div class="cp-user-wallet-table table-responsive buy-table crypto-exchange-table">

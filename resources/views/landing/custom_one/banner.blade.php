@@ -11,17 +11,8 @@
             <div class="col-lg-6">
                 <h1 class="hero-title">{{$section_parent->section_title}}</h1>
                 <p class="hero-content">{{$section_parent->section_description}}</p>
-                @if(Auth::user())
-                    @if(Auth::user()->role == USER_ROLE_USER)
-                        <a href="{{route('marketPlace')}}" class="primary-btn btn-md">{{__('Go The Marketplace')}}</a>
-                    @else
-                        <a href="{{route('adminDashboard')}}" class="primary-btn btn-md">{{__('Dashboard')}}</a>
-                    @endif
-                @else
-                    <a class="primary-btn btn-md me-3" href="{{route('login')}}">{{$section_data[0]->login_button_name}}</a>
-                    <a class="primary-btn btn-md" href="{{route('signUp')}}">{{$section_data[0]->register_button_name}}</a>
-                @endif
-
+                <a class="primary-btn btn-md me-3" href="{{route('login')}}">{{$section_data[0]->login_button_name}}</a>
+                <a class="primary-btn btn-md" href="{{route('signUp')}}">{{$section_data[0]->register_button_name}}</a>
             </div>
             @if($section_data[0]->is_filter)
                 <div class="col-lg-5 offset-lg-1">

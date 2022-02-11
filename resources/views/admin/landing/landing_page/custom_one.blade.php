@@ -29,11 +29,7 @@
                 </ul>
                 <div class="navbar-right">
                     <div class="navbar-right-wrap">
-                        @if(Auth::user())
-                            <a @if(Auth::user()->role == USER_ROLE_USER) href="{{route('userDashboard')}}" @else href="{{route('adminDashboard')}}" @endif class="register-button">{{__('Dashboard')}}</a>
-                        @else
-                            <a href="{{route('login')}}" class="register-button">{{__('Sign in')}}</a>
-                        @endif
+                        <a href="#" class="register-button">sign in</a>
                     </div>
                 </div>
             </div>
